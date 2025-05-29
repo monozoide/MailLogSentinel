@@ -4,14 +4,19 @@
   <img src="img/banner-logo.png" alt="MailLogSentinel Banner" height="100">
 </p>
 
-> **MailLogSentinel** – A simple monitoring tool for Postfix mail servers.
-
+<p align="center">
+A simple monitoring tool for Postfix mail servers.
+</p>
 
 <p align="center">
-
-![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/cryptozoide/MailLogSentinel) ![GitHub License](https://img.shields.io/github/license/cryptozoide/MailLogSentinel) ![GitHub top language](https://img.shields.io/github/languages/top/cryptozoide/MailLogSentinel) ![Python 3.x](https://img.shields.io/badge/python-3.x-brightgreen) ![Issues Welcome](https://img.shields.io/badge/Issues-Welcome-brightgreen)
-
+  <img src="https://img.shields.io/github/languages/code-size/cryptozoide/MailLogSentinel" alt="GitHub code size in bytes" /> 
+  <img src="https://img.shields.io/github/license/cryptozoide/MailLogSentinel" alt="GitHub License" /> 
+  <img src="https://img.shields.io/github/languages/top/cryptozoide/MailLogSentinel" alt="GitHub top language" /> 
+  <img src="https://img.shields.io/badge/python-3.x-brightgreen" alt="Python 3.x" /> 
+  <img src="https://img.shields.io/badge/Issues-Welcome-brightgreen" alt="Issues Welcome" />
 </p>
+
+
 
 ---
 
@@ -64,6 +69,9 @@ chmod +x maillogsentinel.py && sudo cp maillogsentinel.py /usr/local/bin/
 ```bash
 sudo /usr/local/bin/maillogsentinel --setup
 ```
+
+> [!WARNING]
+> Read the [Wiki](https://github.com/cryptozoide/MailLogSentinel/wiki) before the first run for more information. 
 
 ## Architecture & Visuals
 
