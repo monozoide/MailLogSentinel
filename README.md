@@ -4,9 +4,19 @@
   <img src="img/banner-logo.png" alt="MailLogSentinel Banner" height="100">
 </p>
 
-> **MailLogSentinel** – A simple monitoring tool for Postfix mail servers.
+<p align="center">
+A simple monitoring tool for Postfix mail servers.
+</p>
 
-![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue) ![Python 3.x](https://img.shields.io/badge/python-3.x-brightgreen) ![Issues Welcome](https://img.shields.io/badge/Issues-Welcome-brightgreen)
+<p align="center">
+  <img src="https://img.shields.io/github/languages/code-size/cryptozoide/MailLogSentinel" alt="GitHub code size in bytes" /> 
+  <img src="https://img.shields.io/github/license/cryptozoide/MailLogSentinel" alt="GitHub License" /> 
+  <img src="https://img.shields.io/github/languages/top/cryptozoide/MailLogSentinel" alt="GitHub top language" /> 
+  <img src="https://img.shields.io/badge/python-3.x-brightgreen" alt="Python 3.x" /> 
+  <img src="https://img.shields.io/badge/Issues-Welcome-brightgreen" alt="Issues Welcome" />
+</p>
+
+
 
 ---
 
@@ -59,6 +69,9 @@ chmod +x maillogsentinel.py && sudo cp maillogsentinel.py /usr/local/bin/
 ```bash
 sudo /usr/local/bin/maillogsentinel --setup
 ```
+
+> [!WARNING]
+> Read the [Wiki](https://github.com/cryptozoide/MailLogSentinel/wiki) before the first run for more information. 
 
 ## Architecture & Visuals
 
@@ -156,7 +169,8 @@ Each new intrusion record is appended automatically.
 ```
 
 ## Full documentation
-This is just an overview of how it works and features. For full documentation, please visit the [MailLogSentinel Wiki](https://github.com/cryptozoide/MailLogSentinel/wiki).
+> [!IMPORTANT]
+> This is just an overview of how it works and features. For full documentation, please visit the [MailLogSentinel Wiki](https://github.com/cryptozoide/MailLogSentinel/wiki).
 
 ## Contributing
 All contributions are welcome—code, docs, ideas, bug reports!
@@ -202,4 +216,5 @@ Have an idea? Open an issue and let’s discuss! 💬
 This project is licensed under the GNU GPL v3. See [LICENSE](LICENSE) for details.
 
 ## Support
-If you find **MailLogSentinel** useful, consider sponsoring or donating. See [FUNDING](FUNDING.md)
+> [!TIP]
+> If you find **MailLogSentinel** useful, consider sponsoring or donating. See [FUNDING](FUNDING.md)
