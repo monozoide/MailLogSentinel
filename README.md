@@ -6,7 +6,12 @@
 
 > **MailLogSentinel** – A simple monitoring tool for Postfix mail servers.
 
-![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue) ![Python 3.x](https://img.shields.io/badge/python-3.x-brightgreen) ![Issues Welcome](https://img.shields.io/badge/Issues-Welcome-brightgreen)
+
+<p align="center">
+
+![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/cryptozoide/MailLogSentinel) ![GitHub License](https://img.shields.io/github/license/cryptozoide/MailLogSentinel) ![GitHub top language](https://img.shields.io/github/languages/top/cryptozoide/MailLogSentinel) ![Python 3.x](https://img.shields.io/badge/python-3.x-brightgreen) ![Issues Welcome](https://img.shields.io/badge/Issues-Welcome-brightgreen)
+
+</p>
 
 ---
 
@@ -156,7 +161,8 @@ Each new intrusion record is appended automatically.
 ```
 
 ## Full documentation
-This is just an overview of how it works and features. For full documentation, please visit the [MailLogSentinel Wiki](https://github.com/cryptozoide/MailLogSentinel/wiki).
+> [!IMPORTANT]
+> This is just an overview of how it works and features. For full documentation, please visit the [MailLogSentinel Wiki](https://github.com/cryptozoide/MailLogSentinel/wiki).
 
 ## Contributing
 All contributions are welcome—code, docs, ideas, bug reports!
@@ -202,4 +208,5 @@ Have an idea? Open an issue and let’s discuss! 💬
 This project is licensed under the GNU GPL v3. See [LICENSE](LICENSE) for details.
 
 ## Support
-If you find **MailLogSentinel** useful, consider sponsoring or donating. See [FUNDING](FUNDING.md)
+> [!TIP]
+> If you find **MailLogSentinel** useful, consider sponsoring or donating. See [FUNDING](FUNDING.md)
