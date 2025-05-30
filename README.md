@@ -14,6 +14,8 @@ A simple monitoring tool for Postfix mail servers.
   <img src="https://img.shields.io/github/languages/top/cryptozoide/MailLogSentinel" alt="GitHub top language" /> 
   <img src="https://img.shields.io/badge/python-3.x-brightgreen" alt="Python 3.x" /> 
   <img src="https://img.shields.io/badge/Issues-Welcome-brightgreen" alt="Issues Welcome" />
+  <img src="https://img.shields.io/liberapay/receives/Zoide.svg?logo=liberapay">
+  <img src="https://img.shields.io/liberapay/gives/Zoide.svg?logo=liberapay">
 </p>
 
 
@@ -202,19 +204,27 @@ All contributions are welcome—code, docs, ideas, bug reports!
 ```
 
 ## Roadmap
-Have an idea? Open an issue and let’s discuss! 💬
-
-- [ ] Add automated tests & CI (GitHub Actions)
-
-- [ ] Custom alert thresholds
-
-- [ ] Web-based dashboard
-
-- [ ] Add country flag to logs
+You can consult the [Roadmap.md](docs/Roadmap.md)  file for more information
 
 ## License
 This project is licensed under the GNU GPL v3. See [LICENSE](LICENSE) for details.
 
 ## Support
 > [!TIP]
-> If you find **MailLogSentinel** useful, consider sponsoring or donating. See [FUNDING](FUNDING.md)
+> As a free software enthusiast, I have devoted a large part of my life to using, promoting, and defending free and open source culture in all its forms. I develop these tools as a hobby, at my own pace, but I couldn’t accomplish anything without the extraordinary OSS ecosystem that inspires me every day.
+ [!TIP]
+> To support the community, **30% of every donation** will be transparently redistributed to other open source projects. You can track the progress of these contributions and the breakdown of your support in the Wiki section of this repository, via a monthly financial report.
+ [!TIP]
+> Thank you for your trust and support! :sparkling_heart: 
+
+> [!IMPORTANT]
+> I chose [Liberapay](https://liberapay.com/) for several reasons:
+>
+> - Non-profit association based in France :clap:
+> - Funding of donation-related fees through user donations ^^
+> - Association publishing its source code on [GitHub](https://github.com/liberapay/liberapay.com) under the [CC0](https://fr.wikipedia.org/wiki/Licence_CC0) license :heart_eyes:
+> - Ability for donors to make secret, private, or public donations :ghost:
+> - Opportunity for everyone to contribute to the life of the association and/or the platform :construction_worker:
+> 
+> <noscript><a href="https://liberapay.com/Zoide/donate"><img alt="Donate using Liberapay" src="https://liberapay.com/assets/widgets/donate.svg"></a></noscript>
+
