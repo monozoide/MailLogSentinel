@@ -222,7 +222,7 @@ This project is licensed under the GNU GPL v3. See [LICENSE](LICENSE) for detail
 >
 > - Non-profit association based in France :clap:
 > - Funding of donation-related fees through user donations ^^
-> - Association publishing its source code on [GitHub](https://github.com/liberapay/liberapay.com) under the [CC0](https://fr.wikipedia.org/wiki/Licence_CC0) license :heart_eyes:
+> - Association publishing its source code on [GitHub](https://github.com/liberapay/liberapay.com) under the [CC0]([https://fr.wikipedia.org/wiki/Licence_CC0](https://en.wikipedia.org/wiki/Creative_Commons_license#Zero,_public_domain)) license :heart_eyes:
 > - Ability for donors to make secret, private, or public donations :ghost:
 > - Opportunity for everyone to contribute to the life of the association and/or the platform :construction_worker:
 > 
