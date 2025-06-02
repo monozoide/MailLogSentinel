@@ -1,16 +1,16 @@
-## 🚀 À venir
-- [ ] Implémenter un SGBDR
-- [ ] Implémenter la localisation géographique des IPs
-- [ ] Mise en place de tests unitaires
-- [ ] Configuration CI/CD
-- [ ] Anonymisation des logs Postfix
-- [ ] Sécuriser le fichier CSV
-- [ ] Rédiger les _Use cases_
+## 🚀 Upcoming
+- [ ] Implement an RDBMS
+- [ ] Implement IP geolocation
+- [ ] Set up unit tests
+- [ ] Configure CI/CD
+- [ ] Secure the CSV file
+- [ ] Draft the _Use cases_
 
-## 🔄 En cours
-- [ ] Rédaction du Wiki
-- [ ] Tests de performance
+## 🔄 In Progress
+- [ ] Performance testing
 
-## ✔️ Terminé
-- [x] Finalisation de la v3.3.1
-- [x] Rédaction de la documentation
+## ✔️ Completed
+- [x] Finalize v3.3.1
+- [x] Write the documentation
+- [x] Write the Wiki
+- [x] Anonymize Postfix logs
