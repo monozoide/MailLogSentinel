@@ -30,6 +30,7 @@ A simple monitoring tool for Postfix mail servers.
 - [Generated email](#generated-email)
 - [Generated CSV Structure](#generated-csv-structure)
 - [Generated logs](#generated-logs)
+- [Additional features](#additional-features)
 - [Full documentation](#full-documentation)
 - [Contributing](#contributing)
 - [Roadmap](#roadmap)
@@ -170,6 +171,15 @@ Each new intrusion record is appended automatically.
 2025-05-29 00:00:01,938 INFO === End of MailLogSentinel execution ===
 ```
 
+## Additional features
+### Log Anonymizer Script
+
+The `bin/log_anonymizer.py` script is a utility designed to anonymize sensitive data within log files, with a particular focus on Postfix mail logs. This is useful for sharing log excerpts for troubleshooting purposes or for archiving logs while minimizing privacy concerns.
+
+> [!WARNING]
+> Read the [Wiki](https://github.com/cryptozoide/MailLogSentinel/wiki) for more informations about this feature.
+
+
 ## Full documentation
 > [!IMPORTANT]
 > This is just an overview of how it works and features. For full documentation, please visit the [MailLogSentinel Wiki](https://github.com/cryptozoide/MailLogSentinel/wiki).
@@ -222,7 +232,7 @@ This project is licensed under the GNU GPL v3. See [LICENSE](LICENSE) for detail
 >
 > - Non-profit association based in France :clap:
 > - Funding of donation-related fees through user donations ^^
-> - Association publishing its source code on [GitHub](https://github.com/liberapay/liberapay.com) under the [CC0](https://en.wikipedia.org/wiki/Creative_Commons_license#Zero,_public_domain) license :heart_eyes:
+> - Association publishing its source code on [GitHub](https://github.com/liberapay/liberapay.com) under the [CC0](https://fr.wikipedia.org/wiki/Licence_CC0) license :heart_eyes:
 > - Ability for donors to make secret, private, or public donations :ghost:
 > - Opportunity for everyone to contribute to the life of the association and/or the platform :construction_worker:
 > 
