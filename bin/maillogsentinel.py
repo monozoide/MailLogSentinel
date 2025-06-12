@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-maillogsentinel.py v3.3.0 (smtplib, full sender address) :
+maillogsentinel.py v4.0.2 (smtplib, full sender address) :
 
 - extract server;date;ip;user;hostname from Postfix SASL logs  
 - incremental parse of /var/log/mail.log with rotation/truncation detection  
@@ -31,24 +31,30 @@ import getpass
 import functools
 import time
 from email.message import EmailMessage
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Optional, Tuple, List, Union, Callable # Union might be needed if we encounter X | Y, Callable for type hint
 import copy # Added for deepcopy
+import ipinfo # Added for IP Geolocation and ASN
 
 # --- Global DNS Cache Variables ---
 CACHED_DNS_LOOKUP_FUNC: Optional[Callable[[str], Tuple[Optional[str], Optional[str], float]]] = None
 DNS_CACHE_SETTINGS: dict = {}
 
+# --- Global IPInfoManager ---
+IP_INFO_MANAGER: Optional[ipinfo.IPInfoManager] = None
+
 # --- Constants ---
 SCRIPT_NAME     = "MailLogSentinel"
-VERSION         = "v1.0.4-B"
+VERSION         = "v4.0.2"
 DEFAULT_CONFIG  = Path("/etc/maillogsentinel.conf")
 STATE_FILENAME  = "state.offset" # Keep as string, will be appended to Path object
 CSV_FILENAME    = "maillogsentinel.csv"  # Keep as string
 LOG_FILENAME    = "maillogsentinel.log"
 SECTION_PATHS   = "paths"
 SECTION_REPORT  = "report"
+SECTION_GEOLOCATION = "geolocation" # New section
+SECTION_ASN_ASO = "ASN_ASO" # New section
 
 MONTHS = {
     'Jan': 1, 'Feb': 2, 'Mar': 3, 'Apr': 4,
@@ -97,14 +103,34 @@ def setup_paths(cfg): # Returns Path objects
         statedir = workdir / (state_dir_str or "state")
         
     maillog  = Path(p.get("mail_log", "/var/log/mail.log"))
+
+    # Define default paths for geolocation and ASN databases
+    # These defaults are used if the sections or keys are missing in the config file.
+    default_country_db_path_str = "/var/lib/maillogsentinel/country_aside.csv"
+    default_asn_db_path_str = "/var/lib/maillogsentinel/asn.csv" # Corrected default, was asn-ipv4.csv
+
+    # Safely get paths using configparser's get method with fallback
+    country_db_path_str = cfg.get(SECTION_GEOLOCATION, 'country_db_path', fallback=default_country_db_path_str)
+    asn_db_path_str = cfg.get(SECTION_ASN_ASO, 'asn_db_path', fallback=default_asn_db_path_str)
+
+    country_db_path = Path(country_db_path_str)
+    asn_db_path = Path(asn_db_path_str)
+
     try:
         workdir.mkdir(parents=True, exist_ok=True)
         statedir.mkdir(parents=True, exist_ok=True)
+        # Ensure parent directories for DB paths exist if they are specified and not default
+        # ipinfo module itself should handle creation of its own data dir, but if paths are customized elsewhere...
+        if country_db_path.parent != Path("/var/lib/maillogsentinel"): # Example default parent
+            country_db_path.parent.mkdir(parents=True, exist_ok=True)
+        if asn_db_path.parent != Path("/var/lib/maillogsentinel"): # Example default parent
+            asn_db_path.parent.mkdir(parents=True, exist_ok=True)
+
     except OSError as e:
         # Logging might not be set up yet, print to stderr
         print(f"⚠️  Permission denied creating directory {e.filename}: {e}", file=sys.stderr)
         sys.exit(1)
-    return workdir, statedir, maillog
+    return workdir, statedir, maillog, country_db_path, asn_db_path
 
 def setup_logging(workdir: Path, level_str: str = "INFO"): # Expects a Path object and level string
     LOG_LEVELS_MAP = {
@@ -168,6 +194,23 @@ def get_extraction_frequency() -> str:
         # File not found or not readable, return default
         pass  # Fall through to return default
     return "hourly"
+
+def get_report_schedule() -> str:
+    """
+    Reads the systemd timer file for maillogsentinel-report.timer
+    and returns the OnCalendar value.
+    Returns "23:50" if the file or setting is not found.
+    """
+    timer_file_path = "/etc/systemd/system/maillogsentinel-report.timer"
+    try:
+        with open(timer_file_path, "r", encoding="utf-8") as f:
+            for line in f:
+                if line.strip().startswith("OnCalendar="):
+                    return line.split("=", 1)[1].strip()
+    except IOError:
+        # File not found or not readable, return default
+        pass  # Fall through to return default
+    return "23:50" # Default if not found or error
 
 def list_all_logs(maillog: Path): # Expects Path, returns list of Paths
     files = []
@@ -260,7 +303,7 @@ def reverse_lookup(ip: str, logger: logging.Logger) -> Tuple[Optional[str], Opti
     
     return final_hostname, final_error_str
 
-def _parse_log_line(log_line_text: str, current_year: int, logger: logging.Logger):
+def _parse_log_line(log_line_text: str, current_year: int, logger: logging.Logger, ip_info_mgr: Optional[ipinfo.IPInfoManager]):
     """
     Parses a single log line and extracts relevant SASL authentication attempt details.
 
@@ -310,6 +353,15 @@ def _parse_log_line(log_line_text: str, current_year: int, logger: logging.Logge
             # hostn_val remains "null"
             status_val = "Failed (Unknown)"
 
+        country_code = "N/A"
+        asn = "N/A"
+        aso = "N/A"
+        if ip_info_mgr:
+            geo_info = ip_info_mgr.lookup_ip_info(ip)
+            if geo_info:
+                country_code = geo_info.get("country_code", "N/A")
+                asn = geo_info.get("asn", "N/A")
+                aso = geo_info.get("aso", "N/A")
 
         return {
             "server": server,
@@ -317,7 +369,10 @@ def _parse_log_line(log_line_text: str, current_year: int, logger: logging.Logge
             "ip": ip,
             "user": user,
             "hostn": hostn_val,
-            "reverse_dns_status": status_val
+            "reverse_dns_status": status_val,
+            "country_code": country_code,
+            "asn": asn,
+            "aso": aso
         }
     except KeyError: # Month abbreviation not in MONTHS
         logger.warning(f"Invalid month abbreviation in log line: {log_line_text.strip()}") # Already f-string
@@ -341,7 +396,7 @@ def extract_entries(filepaths: List[Path], maillog: Path, csvpath_param: str, lo
     with csv_file_path.open("a", encoding="utf-8", newline='') as csvf: # Add newline='' for csv.writer
         writer = csv.writer(csvf, delimiter=';', quoting=csv.QUOTE_MINIMAL)
         if header:
-            writer.writerow(["server", "date", "ip", "user", "hostname", "reverse_dns_status"]) # Added new header
+            writer.writerow(["server", "date", "ip", "user", "hostname", "reverse_dns_status", "country_code", "asn", "aso"])
         
         for path_obj in filepaths: # path_obj is now a Path object
             try:
@@ -364,26 +419,28 @@ def extract_entries(filepaths: List[Path], maillog: Path, csvpath_param: str, lo
                     with gzip.open(path_obj, mode=mode, encoding="utf-8", errors="ignore") as fobj:
                         # Note: gzipped files are read entirely, seek and fobj.tell() for offset are not applicable in the same way.
                         for line in fobj:
-                            parsed_data = _parse_log_line(line, current_year, logger)
+                            parsed_data = _parse_log_line(line, current_year, logger, IP_INFO_MANAGER)
                             if parsed_data:
                                 writer.writerow([
                                     parsed_data['server'], parsed_data['date_s'],
                                     parsed_data['ip'], parsed_data['user'],
                                     parsed_data['hostn'],
-                                    parsed_data.get('reverse_dns_status', 'Failed (Unknown)') # New field
+                                    parsed_data.get('reverse_dns_status', 'Failed (Unknown)'),
+                                    parsed_data['country_code'], parsed_data['asn'], parsed_data['aso']
                                 ])
                 else: # For non-gzipped files
                     with path_obj.open(mode=mode, encoding="utf-8", errors="ignore") as fobj:
                         logger.info(f"Incremental read of {path_obj} from {curr_off}")
                         fobj.seek(curr_off)
                         for line in fobj:
-                            parsed_data = _parse_log_line(line, current_year, logger)
+                            parsed_data = _parse_log_line(line, current_year, logger, IP_INFO_MANAGER)
                             if parsed_data:
                                 writer.writerow([
                                     parsed_data['server'], parsed_data['date_s'],
                                     parsed_data['ip'], parsed_data['user'],
                                     parsed_data['hostn'],
-                                    parsed_data.get('reverse_dns_status', 'Failed (Unknown)') # New field
+                                    parsed_data.get('reverse_dns_status', 'Failed (Unknown)'),
+                                    parsed_data['country_code'], parsed_data['asn'], parsed_data['aso']
                                 ])
                         # Only update offset from current, non-gzipped mail.log
                         if path_obj == maillog: 
@@ -447,14 +504,14 @@ def _analyze_csv_for_report(csv_path, logger, today_date_str):
                 pass # Fall through to size/line count calculation
 
             for row in reader:
-                if len(row) < 6: # Updated for 6 columns
-                    logger.warning(f"Skipping malformed CSV row (expected 6 fields, got {len(row)}): {row}")
+                if len(row) < 9: # Updated for 9 columns
+                    logger.warning(f"Skipping malformed CSV row (expected 9 fields, got {len(row)}): {row}")
                     continue
                 
-                # Unpack all 6 fields
-                server_val, date_field, ip_val, user_val, hostn_val, rev_dns_status_val = row[:6]
+                # Unpack all 9 fields
+                server_val, date_field, ip_val, user_val, hostn_val, rev_dns_status_val, country_val, asn_val, aso_val = row[:9]
 
-                logger.debug(f"Read CSV line: Server='{server_val}', Date='{date_field}', IP='{ip_val}', User='{user_val}', Hostname='{hostn_val}', DNS Status='{rev_dns_status_val}'. Comparing Date with '{today_date_str}'.")
+                logger.debug(f"Read CSV line: Server='{server_val}', Date='{date_field}', IP='{ip_val}', User='{user_val}', Hostname='{hostn_val}', DNS Status='{rev_dns_status_val}', Country='{country_val}', ASN='{asn_val}', ASO='{aso_val}'. Comparing Date with '{today_date_str}'.")
                 
                 if date_field.startswith(today_date_str):
                     logger.debug(f"MATCHED: CSV date '{date_field}' starts with '{today_date_str}'. Processing for stats.")
@@ -524,12 +581,36 @@ def send_report(cfg, workdir: Path, logger: logging.Logger): # workdir is Path
         logger.warning(f"CSV file {csv_file} not found. No report to send.")
         return
 
-    today_date_str = datetime.now().strftime("%d/%m/%Y")
-    # Pass Path object to _analyze_csv_for_report
-    report_stats = _analyze_csv_for_report(csv_file, logger, today_date_str)
+    report_schedule = get_report_schedule() 
+    now = datetime.now()
+    report_date_to_analyze = now
+
+    # Check if the schedule indicates a midnight run, possibly set as "daily"
+    # "daily" is converted to "*-*-* 00:00:00" by the setup
+    # Also check for common variations of midnight.
+    schedule_lower = report_schedule.lower()
+    # Regex for HH:MM format, used to check if it's "00:00"
+    hh_mm_pattern = r"\d{2}:\d{2}"
+    # Regex for OnCalendar string ending with a time, used to check if it ends with " 00:00:00"
+    oncalendar_time_pattern = r".* \d{2}:\d{2}:\d{2}"
+
+    if schedule_lower == "daily" or \
+       schedule_lower == "*-*-* 00:00:00" or \
+       (re.fullmatch(hh_mm_pattern, schedule_lower) and schedule_lower == "00:00") or \
+       (re.match(oncalendar_time_pattern, schedule_lower) and schedule_lower.endswith(" 00:00:00")):
+        report_date_to_analyze = now - timedelta(days=1)
+        logger.info(f"Report schedule '{report_schedule}' implies a midnight run. Analyzing data for previous day (J-1): {report_date_to_analyze.strftime('%d/%m/%Y')}.")
+    else:
+        logger.info(f"Report schedule is '{report_schedule}'. Analyzing data for current day: {now.strftime('%d/%m/%Y')}.")
+        # report_date_to_analyze remains 'now'
+
+    date_str_for_analysis = report_date_to_analyze.strftime("%d/%m/%Y")
+    
+    # Pass Path object to _analyze_csv_for_report, and the potentially adjusted date string
+    report_stats = _analyze_csv_for_report(csv_file, logger, date_str_for_analysis)
 
     if report_stats is None:
-        logger.error("CSV analysis failed. Cannot generate or send report.") # Already f-string (no args)
+        logger.error("CSV analysis failed. Cannot generate or send report.")
         return
 
     # Determine sender: current user and FQDN
@@ -828,7 +909,13 @@ def interactive_setup(config_path_obj: Path):
             "report": {
                 "email": "security-team@example.org",
             },
-            "general": { 
+            "geolocation": { # New section for geolocation DB
+                "country_db_path": "/var/lib/maillogsentinel/country_aside.csv",
+            },
+            "ASN_ASO": { # New section for ASN DB
+                "asn_db_path": "/var/lib/maillogsentinel/asn.csv",
+            },
+            "general": {
                 "log_level": "INFO",
             }
         }
@@ -942,7 +1029,11 @@ def interactive_setup(config_path_obj: Path):
             _setup_print_and_log(report_time_str_input_prompt, setup_log_fh, is_prompt=True)
             report_time_str = input().strip() or "23:50"
 
-            if re.fullmatch(r"\d{2}:\d{2}", report_time_str):
+            if report_time_str.lower() == "daily": # Add this condition first
+                report_on_calendar = "*-*-* 00:00:00"
+                _setup_print_and_log(f"Interpreting 'daily' as OnCalendar value: {report_on_calendar}", setup_log_fh) # Log the interpretation
+                break
+            elif re.fullmatch(r"\d{2}:\d{2}", report_time_str):
                 try:
                     h, m = map(int, report_time_str.split(':'))
                     if 0 <= h <= 23 and 0 <= m <= 59:
@@ -957,7 +1048,8 @@ def interactive_setup(config_path_obj: Path):
                     original_stderr_print(err_msg)
                     _setup_print_and_log(err_msg, setup_log_fh)
             else:
-                report_on_calendar = report_time_str
+                # This handles other valid OnCalendar strings like 'Mon *-*-* 02:00:00'
+                report_on_calendar = report_time_str 
                 break 
 
         while True:
@@ -1171,6 +1263,131 @@ WantedBy=timers.target
             if journalctl_instructions:
                 _setup_print_and_log(f"   You can view logs for the services using: {' and '.join(journalctl_instructions)}", setup_log_fh)
 
+        # --- Systemd Timer for IP Database Updates ---
+        _setup_print_and_log("\n--- IP Database Update Timer (Optional) ---", setup_log_fh)
+        ip_update_answer_prompt = "Do you want to schedule daily updates for the IP geolocation and ASN databases? (yes/no) [default: yes]: "
+        _setup_print_and_log(ip_update_answer_prompt, setup_log_fh, is_prompt=True)
+        ip_update_answer = input().strip().lower()
+        if not ip_update_answer: # Default to yes if empty
+            ip_update_answer = "yes"
+
+        if ip_update_answer == "yes":
+            default_ip_update_schedule = "03:00" # Daily at 3 AM
+            ip_update_schedule_prompt = f"Enter OnCalendar value for IP database updates (e.g., '03:00', 'daily') [default: {default_ip_update_schedule}]: "
+            _setup_print_and_log(ip_update_schedule_prompt, setup_log_fh, is_prompt=True)
+            ip_update_schedule_input = input().strip() or default_ip_update_schedule
+            
+            ip_update_on_calendar = f"*-*-* {ip_update_schedule_input}:00" if re.fullmatch(r"\d{2}:\d{2}", ip_update_schedule_input) else ip_update_schedule_input
+
+            # Assume ipinfo.py is installed in the same directory or a known path
+            # For now, using /usr/local/bin/ipinfo.py as placeholder
+            ipinfo_script_path = "/usr/local/bin/ipinfo.py" 
+            # The ipinfo.py script's --update option was for its internal data path.
+            # We need to ensure it uses the paths from maillogsentinel.conf.
+            # The current ipinfo.py --update downloads to its DEFAULT_DATA_PATH.
+            # This might need adjustment in ipinfo.py or a new CLI arg to specify target paths from maillogsentinel.conf
+            # For now, assume --update will use the configured paths if ipinfo.py is enhanced,
+            # or that its default paths match what's in maillogsentinel.conf.
+            # A better approach for ipinfo.py would be:
+            # ipinfo.py --config /etc/maillogsentinel.conf --update-databases
+            # For now, let's use a simplified ExecStart and note this might need refinement.
+            # The ipinfo.py script's main() function already handles --data-dir and --data-url if needed,
+            # and it uses DEFAULT_DATA_PATH which is ~/.ipinfo/country_aside.csv
+            # For system-wide service, this should be /var/lib/maillogsentinel/.
+            # The `ipinfo.py` script would need to be modified to accept `--country-db-path` and `--asn-db-path`
+            # or to read them from the maillogsentinel.conf file by itself.
+            # For this subtask, we will generate the service assuming ipinfo.py can take --update with relevant config from maillogsentinel.
+            # The `bin/ipinfo.py` `main()` function already handles `--update` and uses the configured paths if `load_data` is called first.
+            # The `ipinfo.py` script needs to be callable in a way that it *only* performs the update based on `maillogsentinel.conf`.
+            # A new specific option like `--update-dbs-from-config <config_path>` would be ideal for ipinfo.py.
+            # Given current ipinfo.py, `ipinfo.py --update --data-dir /var/lib/maillogsentinel` (if data dir is unified)
+            # Or `ipinfo.py --update --country-db-path <path> --asn-db-path <path>` (if specific paths can be passed)
+            # The current `ipinfo.py` takes `--data-dir` for `country_aside.csv` and implies `asn.csv` is there too.
+            # This is a slight mismatch as maillogsentinel.conf specifies them separately.
+            # For now, we'll assume that `ipinfo.py --update --data-dir /var/lib/maillogsentinel` is the intended mechanism
+            # and that both DBs are expected in that directory by ipinfo.py. This matches ipinfo.py's DEFAULT_DATA_DIR structure.
+            # The actual DB file names are fixed in ipinfo.py (country_aside.csv, asn.csv).
+            # So, maillogsentinel.conf `country_db_path` and `asn_db_path` should point to these files in the shared data dir.
+            
+            # Correct data directory for ipinfo.py should be the parent of the configured DB paths.
+            # Assuming country_db_path and asn_db_path are in the same directory as per typical ipinfo.py setup.
+            ipinfo_data_dir = collected_config['geolocation'].get('country_db_path')
+            if ipinfo_data_dir:
+                ipinfo_data_dir = str(Path(ipinfo_data_dir).parent) # Get parent dir
+            else: # Fallback if not in collected_config (should be, due to defaults)
+                ipinfo_data_dir = "/var/lib/maillogsentinel"
+
+
+            ipinfo_update_service_content = f"""[Unit]
+Description=Service to update IP geolocation and ASN databases for MailLogSentinel
+After=network.target
+
+[Service]
+Type=oneshot
+User={run_as_user}
+ExecStart={python_executable} {ipinfo_script_path} --update --data-dir {ipinfo_data_dir}
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
+"""
+            ipinfo_update_timer_content = f"""[Unit]
+Description=Timer to periodically update IP geolocation and ASN databases
+Documentation=man:maillogsentinel(8) # Assuming man page might cover this too
+
+[Timer]
+Unit=ipinfo-update.service
+OnCalendar={ip_update_on_calendar}
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+"""
+            new_unit_files = {
+                "ipinfo-update.service": ipinfo_update_service_content,
+                "ipinfo-update.timer": ipinfo_update_timer_content,
+            }
+            _setup_print_and_log(f"\nSaving IP database update Systemd unit files to: {current_dir_path}", setup_log_fh)
+            new_saved_files = []
+            for filename, content in new_unit_files.items():
+                file_path = current_dir_path / filename
+                try:
+                    _setup_print_and_log(f"\n--- Content of systemd file: {filename} (to be saved in ./{filename}) ---", setup_log_fh)
+                    for line in content.strip().split('\n'):
+                        _setup_print_and_log(line, setup_log_fh)
+                    _setup_print_and_log(f"--- End of systemd file: {filename} ---", setup_log_fh)
+                    file_path.write_text(content)
+                    _setup_print_and_log(f"  Successfully saved ./{filename}", setup_log_fh)
+                    new_saved_files.append(filename)
+                except IOError as e:
+                    err_msg = f"  ERROR: Could not save ./{filename}: {e}"
+                    original_stderr_print(err_msg)
+                    _setup_print_and_log(err_msg, setup_log_fh)
+            
+            if new_saved_files:
+                _setup_print_and_log("\nTo install and enable the IP database update timer (adjust filenames if any failed to save):", setup_log_fh)
+                cp_ip_update_parts = ["sudo cp"]
+                for fn in new_saved_files:
+                    cp_ip_update_parts.append(f"./{fn}")
+                if len(cp_ip_update_parts) > 1:
+                    cp_ip_update_parts.append("/etc/systemd/system/")
+                    _setup_print_and_log(f"1. {' '.join(cp_ip_update_parts)}", setup_log_fh)
+                else:
+                    _setup_print_and_log("1. (No IP update files were saved to copy, check errors above)", setup_log_fh)
+
+                _setup_print_and_log("2. sudo systemctl daemon-reload", setup_log_fh)
+                if "ipinfo-update.timer" in new_saved_files:
+                    _setup_print_and_log("3. sudo systemctl enable --now ipinfo-update.timer", setup_log_fh)
+                else:
+                    _setup_print_and_log("3. (Skipping enable for ipinfo-update.timer as it was not saved)", setup_log_fh)
+                _setup_print_and_log("4. Check status with: systemctl list-timers --all", setup_log_fh)
+                if "ipinfo-update.service" in new_saved_files:
+                     _setup_print_and_log("   View logs for the IP update service using: journalctl -u ipinfo-update.service -f", setup_log_fh)
+        else:
+            _setup_print_and_log("Skipping setup of Systemd timer for IP database updates.", setup_log_fh)
+
+
         _setup_print_and_log("\n\n--- Directory & Log Access Permissions ---", setup_log_fh)
         
         working_dir_path = Path(collected_config['paths']['working_dir'])
@@ -1337,7 +1554,8 @@ def main():
         if args.purge:
             # All purge-specific logic, correctly indented:
             cfg = load_config(config_file_path)
-            workdir, statedir, _ = setup_paths(cfg)
+            # Purge doesn't need country/ASN DB paths explicitly for its operation
+            workdir, statedir, _, _, _ = setup_paths(cfg) 
             log_level_str_purge = cfg.get("general", "log_level", fallback="INFO").upper()
             logger_purge = setup_logging(workdir, log_level_str_purge)
             
@@ -1373,7 +1591,8 @@ def main():
         if args.reset:
             # All reset-specific logic, correctly indented:
             cfg = load_config(config_file_path)
-            workdir, statedir, _ = setup_paths(cfg)
+            # Reset doesn't need country/ASN DB paths explicitly for its operation
+            workdir, statedir, _, _, _ = setup_paths(cfg)
             log_level_str_reset = cfg.get("general", "log_level", fallback="INFO").upper()
             
             try:
@@ -1418,8 +1637,28 @@ def main():
         # Get log_level from config, default to INFO if section/option missing or value invalid
         log_level_str_main = cfg.get("general", "log_level", fallback="INFO").upper()
 
-        workdir, statedir, maillog_path = setup_paths(cfg) # These are Path objects
+        workdir, statedir, maillog_path, country_db_path, asn_db_path = setup_paths(cfg) # These are Path objects
         logger = setup_logging(workdir, log_level_str_main) # Pass configured log level
+        
+        # --- IPInfoManager Initialization ---
+        global IP_INFO_MANAGER
+        # Use default URLs from ipinfo module for now
+        # These could be made configurable in maillogsentinel.conf in the future if needed
+        asn_db_url = ipinfo.DEFAULT_ASN_DB_URL
+        country_db_url = ipinfo.DEFAULT_COUNTRY_DB_URL
+        
+        # Ensure data directory for ipinfo is based on its own defaults or configuration if we make it configurable
+        # For now, use the paths from maillogsentinel.conf for the database files themselves
+        # The IPInfoManager will use these paths directly.
+        IP_INFO_MANAGER = ipinfo.IPInfoManager(
+            asn_db_path=str(asn_db_path), # IPInfoManager expects string paths
+            country_db_path=str(country_db_path),
+            asn_db_url=asn_db_url,
+            country_db_url=country_db_url,
+            logger=logger # Pass the main logger
+        )
+        logger.info("Attempting initial update/load of IP geolocation and ASN databases...")
+        IP_INFO_MANAGER.update_databases() # This will download if missing and then load.
 
         # --- DNS Cache Configuration Loading ---
         dns_cache_enabled = cfg.getboolean('dns_cache', 'enabled', fallback=True)

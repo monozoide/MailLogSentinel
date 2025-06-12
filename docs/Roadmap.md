@@ -1,6 +1,5 @@
 ## 🚀 Upcoming
 - [ ] Implement an RDBMS
-- [ ] Implement IP geolocation
 - [ ] Set up unit tests
 - [ ] Configure CI/CD
 - [ ] Secure the CSV file
@@ -10,7 +9,8 @@
 - [ ] Performance testing
 
 ## ✔️ Completed
-- [x] Finalize v3.3.1
+- [x] Finalize v4.0.2
+- [x] Implement IP geolocation
 - [x] Write the documentation
 - [x] Write the Wiki
 - [x] Anonymize Postfix logs

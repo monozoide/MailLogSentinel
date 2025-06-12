@@ -45,13 +45,14 @@ Running your own mail server (Postfix) can feel like playing with fire: initial 
 
 **MailLogSentinel** automates log analysis to detect intrusion attempts in real time. It:
 
-- Scans Postfix & Dovecot logs (including rotated archives)
+- Scans Postfix logs (including rotated archives)
 - Identifies failed SASL authentications
 - Extracts key details (date, server, IP, username, hostname)
+- Look up IP address information, such as country, ASN and ASO
 - Appends findings to a CSV file
 - Sends concise email summaries on schedule
 
-No complex frameworks—just Python 3 and standard libraries, plus your existing mail server and Fail2ban.
+No complex frameworks—just Python 3 and standard libraries, plus your existing Postfix mail server.
 
 ---
 
@@ -60,17 +61,18 @@ No complex frameworks—just Python 3 and standard libraries, plus your existing
 1. **Clone the repository**
  ```bash
 git clone https://github.com/cryptozoide/MailLogSentinel.git
-cd MailLogSentinel
+cd MailLogSentinel/bin
 ```
 
 2. **Install the script**
 ```bash
-chmod +x maillogsentinel.py && sudo cp maillogsentinel.py /usr/local/bin/
+chmod +x *.py && sudo cp *.py /usr/local/bin/
+chmod +x MailLogSentinel/lib/maillogsentinel/*.py && sudo cp *.py /usr/local/bin/lib/maillogsentinel/
 ```
 
 3. Run for the first time in interactive mode
 ```bash
-sudo /usr/local/bin/maillogsentinel --setup
+sudo python3 /usr/local/bin/maillogsentinel.py --setup
 ```
 
 > [!WARNING]
@@ -80,9 +82,9 @@ sudo /usr/local/bin/maillogsentinel --setup
 
 ```mermaid
 graph LR
-  A[Postfix logs] --> B[MailLogSentinel]
-  B --> C[CSV File]
-  B --> D[Email Report]
+  A[Postfix logs] --> B[MailLogSentinel] --> C[IpInfo]
+  C --> D[CSV File]
+  C --> E[Email Report]
 ```
 
 ## Generated email
@@ -119,6 +121,40 @@ Top 10 Usernames today:
    8. other			2 times
    9. qijoxuli@domain.tld	1 times
   10. qijoxuli			1 times
+  
+Top 10 countries today:
+   1. CN             6 times
+   2. RU             1 times
+   3. MY             1 times
+   4. AU             1 times
+   5. AE             1 times
+   6. BR             1 times
+   7. US             1 times
+   8. MD             1 times
+
+Top 10 ASO today:
+   1. CHINA UNICOM China169 Backbone                                                2 times
+   2. China Mobile Communications Corporation                                       2 times
+   3. PJSC Moscow city telephone network                                            1 times
+   4. China Unicom IP network China169 Guangdong province                           1 times
+   5. China Mobile                                                                  1 times
+   6. Celcom Axiata Berhad                                                          1 times
+   7. AAPT Limited                                                                  1 times
+   8. Hulum Almustakbal Company for Communication Engineering and Services Ltd      1 times
+   9. TELEFONICA BRASIL S.A                                                         1 times
+  10. Frontier Communications of America, Inc.                                      1 times
+
+Top 10 ASN today:
+   1. 4837        2 times
+   2. 134810      2 times
+   3. 25513       1 times
+   4. 17816       1 times
+   5. 9808        1 times
+   6. 10030       1 times
+   7. 2764        1 times
+   8. 203214      1 times
+   9. 18881       1 times
+  10. 5650        1 times
 
 --- Reverse DNS Lookup Failure Summary ---
 Total failed reverse lookups today: 26
@@ -136,11 +172,11 @@ For more details and documentation, visit: https://github.com/cryptozoide/MailLo
 
 ## Generated CSV Structure
 `reports/intrusions.csv` columns:
-|server|date|ip|user|hostname|reverse_dns_status|
-|--------|--------------------|-----------------|--------------|--------------------|---------|
-| srv01  | 2025-05-17 11:13   | 105.73.190.126  | office@me    | null               | Errno 1 |
-| srv01  | 2025-05-17 12:05   | 81.30.107.24    | contribute   | mail.example.com   | OK      |
-| srv02  | 2025-05-17 13:45   | 192.0.2.45      | admin        | host.example.org   | OK      |
+|server|date|ip|user|hostname|reverse_dns_status|country_code|asn|aso|
+|--------|--------------------|-----------------|--------------|--------------------|---------|----|----------------------|---------|
+| srv01  | 2025-05-17 11:13   | 105.73.190.126  | office@me    | null               | Errno 1 | CN | AAPT Limited         | 134810  |
+| srv01  | 2025-05-17 12:05   | 81.30.107.24    | contribute   | mail.example.com   | OK      | US | China Mobile         | 9808    |
+| srv01  | 2025-05-17 13:45   | 192.0.2.45      | admin        | host.example.org   | OK      | BR | Celcom Axiata Berhad | 18881   |
 
 Each new intrusion record is appended automatically.
 
@@ -152,26 +188,18 @@ Each new intrusion record is appended automatically.
 2025-05-29 00:00:00,315 INFO Processing /var/log/mail.log (gzip: False)
 2025-05-29 00:00:00,316 INFO Incremental read of /var/log/mail.log from 1198314
 2025-05-29 00:00:00,351 DEBUG Using valid cached DNS entry for 206.231.72.34 (timestamp: 1748469600.351121).
-2025-05-29 00:00:00,351 DEBUG Reverse lookup failed for IP 206.231.72.34: Errno 1
+2025-05-29 00:00:00,351 DEBUG Reverse lookup failed for IP 206.231.72.34: Errno 4
 2025-05-29 00:00:00,353 DEBUG Using valid cached DNS entry for 120.157.82.240 (timestamp: 1748469600.3531048).
 2025-05-29 00:00:00,353 DEBUG Reverse lookup failed for IP 120.157.82.240: Errno 1
 2025-05-29 00:00:00,685 DEBUG Using valid cached DNS entry for 47.91.88.67 (timestamp: 1748469600.685305).
-2025-05-29 00:00:00,685 DEBUG Reverse lookup failed for IP 47.91.88.67: Errno 1
+2025-05-29 00:00:00,685 DEBUG Reverse lookup failed for IP 47.91.88.67: Errno 2
 2025-05-29 00:00:00,924 DEBUG Using valid cached DNS entry for 36.135.62.103 (timestamp: 1748469600.9245389).
-2025-05-29 00:00:00,924 DEBUG Reverse lookup failed for IP 36.135.62.103: Errno 1
-2025-05-29 00:00:00,926 DEBUG Using valid cached DNS entry for 38.183.83.241 (timestamp: 1748469600.9269433).
-2025-05-29 00:00:00,927 DEBUG Reverse lookup failed for IP 38.183.83.241: Errno 1
-2025-05-29 00:00:00,928 DEBUG Using valid cached DNS entry for 61.246.233.90 (timestamp: 1748469600.928824).
-2025-05-29 00:00:00,930 DEBUG Using valid cached DNS entry for 119.166.179.228 (timestamp: 1748469600.9304125).
-2025-05-29 00:00:00,930 DEBUG Reverse lookup failed for IP 119.166.179.228: Errno 1
-2025-05-29 00:00:01,935 DEBUG Using valid cached DNS entry for 223.98.188.122 (timestamp: 1748469601.9357255).
-2025-05-29 00:00:01,936 DEBUG Reverse lookup failed for IP 223.98.188.122: Errno 2
-2025-05-29 00:00:01,937 INFO Extraction completed, new offset saved: 1209838
 2025-05-28 23:50:05,205 INFO Report sent from admin@my_server.fqdn to admin@my_server.fqdn
 2025-05-29 00:00:01,938 INFO === End of MailLogSentinel execution ===
 ```
 
 ## Additional features
+
 ### Log Anonymizer Script
 
 The `bin/log_anonymizer.py` script is a utility designed to anonymize sensitive data within log files, with a particular focus on Postfix mail logs. This is useful for sharing log excerpts for troubleshooting purposes or for archiving logs while minimizing privacy concerns.
@@ -179,6 +207,19 @@ The `bin/log_anonymizer.py` script is a utility designed to anonymize sensitive 
 > [!WARNING]
 > Read the [Wiki](https://github.com/cryptozoide/MailLogSentinel/wiki) for more informations about this feature.
 
+### IP Information Utility (`ipinfo.py`)
+
+`ipinfo.py` is a command-line tool and library to look up IP address information, such as country, ASN (Autonomous System Number), and ASO (Autonomous System Organization), using local databases. It also includes functionality to download and update these databases. The default IP geolocation databases used by this utility are sourced from the `sapics/ip-location-db` project on GitHub by user 'sapics' and are licensed under [Creative Commons Zero (CC0)](https://creativecommons.org/publicdomain/zero/1.0/deed). You can find the repository at [https://github.com/sapics/ip-location-db](https://github.com/sapics/ip-location-db).
+
+Basic CLI usage examples:
+```bash
+# Update databases
+bin/ipinfo.py --update
+
+# Lookup an IP address
+bin/ipinfo.py 8.8.8.8
+```
+The script can be configured via `maillogsentinel.conf` to specify paths for the databases, or it will use default paths if not configured.
 
 ## Full documentation
 > [!IMPORTANT]

@@ -1,5 +1,5 @@
 .\" Man page for MailLogSentinel
-.\" Contact cryptozoide on GitHub for issues.
+.\" Contact monozoide on GitHub for issues.
 .TH MAILLOGSENTINEL 8 "2023-10-27" "1.0.4-B" "MailLogSentinel Manual"
 
 .SH NAME
@@ -180,11 +180,40 @@ Successful execution.
 \fB1\fR
 An error occurred (e.g., configuration file not found, permission issues, error during setup). Specific error messages are typically printed to stderr or the script's log file.
 
+.SH AUXILIARY SCRIPTS
+.P
+MailLogSentinel includes several auxiliary scripts located in the \fBbin/\fR directory of the installation. These scripts provide additional functionalities related to log management and data enrichment.
+.SS log_anonymizer.py
+.P
+A utility script designed to anonymize sensitive data within log files, with a particular focus on Postfix mail logs. This is useful for sharing log excerpts for troubleshooting purposes or for archiving logs while minimizing privacy concerns.
+.P
+Basic usage:
+.EX
+\fBbin/log_anonymizer.py\fR \fI<input_log_file>\fR \fI<output_anonymized_log_file>\fR [\fIoptions\fR]
+.EE
+.P
+For more detailed options, refer to the script's help message (\fBbin/log_anonymizer.py --help\fR) or the project's README/Wiki.
+.SS ipinfo.py
+.P
+A command-line tool and library for looking up IP address geolocation information such as country, ASN (Autonomous System Number), and ASO (Autonomous System Organization). It utilizes local databases which can be downloaded and updated.
+.P
+The default IP geolocation databases (country and ASN) utilized by \fBipinfo.py\fR are sourced from the \fIsapics/ip-location-db\fR project on GitHub by user 'sapics'. These databases are provided under the Creative Commons Zero (CC0) license. The project can be found at \fIhttps://github.com/sapics/ip-location-db\fR.
+.P
+Primary command-line operations:
+.IP "\(bu" 2
+\fBbin/ipinfo.py --update\fR: Downloads or updates the IP geolocation databases.
+.IP "\(bu" 2
+\fBbin/ipinfo.py\fR \fI<IP_ADDRESS>\fR: Looks up information for a specific IP address.
+.IP "\(bu" 2
+\fBbin/ipinfo.py --config\fR \fI<path_to_maillogsentinel.conf>\fR: Uses database paths and download URLs specified in the MaillogSentinel configuration file.
+.P
+Database paths and download URLs can be configured via command-line arguments or by reading settings from \fBmaillogsentinel.conf\fR.
+
 .SH AUTHOR
-Written by cryptozoide. See <https://github.com/cryptozoide/MailLogSentinel>.
+Written by monozoide. See <https://github.com/monozoide/MailLogSentinel>.
 
 .SH "REPORTING BUGS"
-Report bugs to the GitHub issues page: <https://github.com/cryptozoide/MailLogSentinel/issues>.
+Report bugs to the GitHub issues page: <https://github.com/monozoide/MailLogSentinel/issues>.
 
 .SH "SEE ALSO"
 .BR fail2ban (1),
