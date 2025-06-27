@@ -1,7 +1,5 @@
 ## 🚀 Upcoming
 - [ ] Implement an RDBMS
-- [ ] Set up unit tests
-- [ ] Configure CI/CD
 - [ ] Secure the CSV file
 - [ ] Draft the _Use cases_
 
@@ -9,7 +7,9 @@
 - [ ] Performance testing
 
 ## ✔️ Completed
-- [x] Finalize v4.0.2
+- [x] Finalize v5.14.13
+- [x] Set up unit tests
+- [x] Configure CI/CD
 - [x] Implement IP geolocation
 - [x] Write the documentation
 - [x] Write the Wiki
