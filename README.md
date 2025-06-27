@@ -9,9 +9,8 @@ A simple monitoring tool for Postfix mail servers.
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/github/languages/code-size/cryptozoide/MailLogSentinel" alt="GitHub code size in bytes" /> 
-  <img src="https://img.shields.io/github/license/cryptozoide/MailLogSentinel" alt="GitHub License" /> 
-  <img src="https://img.shields.io/github/languages/top/cryptozoide/MailLogSentinel" alt="GitHub top language" /> 
+  <img src="https://img.shields.io/github/actions/workflow/status/monozoide/MLS/python-app.yml?branch=main" alt="GitHub Actions Status" />
+  <img src="https://img.shields.io/github/languages/top/monozoide/MailLogSentinel" alt="GitHub top language" /> 
   <img src="https://img.shields.io/badge/python-3.x-brightgreen" alt="Python 3.x" /> 
   <img src="https://img.shields.io/badge/Issues-Welcome-brightgreen" alt="Issues Welcome" />
   <img src="https://img.shields.io/liberapay/receives/Zoide.svg?logo=liberapay">
@@ -60,23 +59,54 @@ No complex frameworks—just Python 3 and standard libraries, plus your existing
 
 1. **Clone the repository**
  ```bash
-git clone https://github.com/cryptozoide/MailLogSentinel.git
-cd MailLogSentinel/bin
+git clone https://github.com/monozoide/MailLogSentinel.git
+cd MailLogSentinel
 ```
 
 2. **Install the script**
 ```bash
-chmod +x *.py && sudo cp *.py /usr/local/bin/
-chmod +x MailLogSentinel/lib/maillogsentinel/*.py && sudo cp *.py /usr/local/bin/lib/maillogsentinel/
+chmod +x bin/*.py 
+sudo cp bin/maillogsentinel.py /usr/local/bin/
+sudo cp bin/ipinfo.py /usr/local/bin/
+# Ensure the library is accessible, e.g., by installing it or adjusting PYTHONPATH
+# For a simple system-wide install of the library (adjust paths as needed):
+sudo mkdir -p /usr/local/lib/maillogsentinel
+sudo cp lib/maillogsentinel/*.py /usr/local/lib/maillogsentinel/
+sudo cp -r lib/maillogsentinel /usr/local/lib/
 ```
+The main script `maillogsentinel.py` includes a setup routine.
 
-3. Run for the first time in interactive mode
-```bash
-sudo python3 /usr/local/bin/maillogsentinel.py --setup
-```
+3. **Run Initial Setup**
+
+MailLogSentinel offers two primary setup modes:
+
+*   **Interactive Setup (Recommended for first-time users):**
+    This mode guides you through the configuration process step-by-step, asking for necessary paths, email addresses, and scheduling preferences. Progress is displayed directly in the console.
+    ```bash
+    sudo /usr/local/bin/maillogsentinel.py --setup --interactive
+    ```
+    During this process, a detailed log is also saved to `maillogsentinel_setup.log` in the directory where you run the command.
+
+*   **Automated/Silent Setup:**
+    This mode uses a pre-configured file for setup. It's useful for deployments or when you have a standard configuration.
+    First, you'll need a source configuration file. You can generate one by running the interactive setup on a machine or by manually creating it based on the required parameters (see `bin/maillogsentinel_setup.py` or the Wiki for details on the config structure).
+    ```bash
+    sudo /usr/local/bin/maillogsentinel.py --setup --automated /path/to/your/source_maillogsentinel.conf
+    ```
+    Progress for automated setup is primarily logged to `maillogsentinel_setup.log`. Console output is minimal, mainly for critical errors.
 
 > [!WARNING]
-> Read the [Wiki](https://github.com/cryptozoide/MailLogSentinel/wiki) before the first run for more information. 
+> Read the [Wiki](https://github.com/monozoide/MailLogSentinel/wiki) for detailed information on configuration options and prerequisites before the first run.
+
+## Progress Display
+
+*   **Setup:**
+    *   **Interactive:** Progress messages are printed to the console at each major step (e.g., "Saving configuration file...", "Creating directories...", "Installing Systemd unit files..."). A detailed log is kept in `maillogsentinel_setup.log`.
+    *   **Automated:** Minimal console output. Detailed progress is logged in `maillogsentinel_setup.log`.
+*   **Log Extraction & Reporting:**
+    *   When run directly (e.g., for testing or manual execution), progress and errors are printed to the console based on the configured log level.
+    *   When run as a Systemd service (the typical production setup), all output (stdout and stderr) is directed to the Systemd journal. You can view these logs using `journalctl -u maillogsentinel.service` (for extraction) or `journalctl -u maillogsentinel-report.service` (for reporting).
+    *   Detailed operational logs are also written to the file specified in the configuration (default: `/var/log/maillogsentinel/maillogsentinel.log`).
 
 ## Architecture & Visuals
 
@@ -88,30 +118,31 @@ graph LR
 ```
 
 ## Generated email
+The email report provides a summary of failed login attempts. Here's an example:
 ```
 ##################################################
-### MailLogSentinel v1.0.4-B                     ###
+### MailLogSentinel v1.0.5-A                     ###
 ### Extraction interval : hourly                 ###
-### Report at 2025-05-27 23:50                   ###
-### Server: 33.44.55.66   (my_server.fqdn)       ###
+### Report at 2025-05-28 10:30                   ###
+### Server: 192.168.1.10   (mail.example.com)    ###
 ##################################################
 
-Total attempts today: 40
+Total attempts today: 55
 
 Top 10 failed authentications today:
-   1. user.1@domain.tld			220.182.17.122		null                                        1 times
-   2. user.1				81.189.180.120		null                                        1 times
-   3. qijoxuli@domain.tld		31.25.31.12		121.31.25.31.convex-tagil.ru                1 times
-   4. qijoxuli				124.155.204.160		124.155.204-160.unknown.starhub.net.sg      1 times
-   5. user2@domain.tld			91.45.76.228		p5b2d4ce4.dip0.t-ipconnect.de               1 times
-   6. user2				158.222.23.245		null                                        1 times
-   7. info@domain.com			208.56.156.50		dynamic-208.56.156.50.tvscable.com          1 times
-   8. user.1@domain.tld			74.208.177.56		null                                        1 times
-   9. user.12				151.249.66.31		null                                        1 times
-  10. info@domain.com			73.197.194.98		c-73-197-194-98.hsd1.nj.comcast.net         1 times
+   1. user@example.com     111.222.11.22  host.attacker.cn   CN  5 times
+   2. admin@example.com    22.33.44.55    another.host.ru    RU  4 times
+   3. testuser             123.123.1.2    unknown.host.br    BR  3 times
+   4. support@example.com  99.88.77.6     some.server.us     US  3 times
+   5. webmaster            10.20.30.40    dynamic.isp.de     DE  2 times
+   6. info@example.com     5.15.25.35     mail.other.net     GB  2 times
+   7. user.1@domain.tld    220.182.17.122 null               N/A 1 times
+   8. user.1               81.189.180.120 null               N/A 1 times
+   9. qijoxuli@domain.tld  31.25.31.12    host.example.ru    RU  1 times
+  10. info@domain.com      73.197.194.98  c-73-197-194-98... US  1 times
 
 Top 10 Usernames today:
-   1. user.1			7 times
+   1. user@example.com         10 times
    2. user.1@domain.tld		6 times
    3. contact@domain.com	3 times
    4. user2@domain.tld		2 times
@@ -167,7 +198,7 @@ Total CSV lines:     3613
 
 Please see attached: maillogsentinel.csv
 
-For more details and documentation, visit: https://github.com/cryptozoide/MailLogSentinel/blob/main/README.md
+For more details and documentation, visit: https://github.com/monozoide/MailLogSentinel/blob/main/README.md
 ```
 
 ## Generated CSV Structure
@@ -205,7 +236,7 @@ Each new intrusion record is appended automatically.
 The `bin/log_anonymizer.py` script is a utility designed to anonymize sensitive data within log files, with a particular focus on Postfix mail logs. This is useful for sharing log excerpts for troubleshooting purposes or for archiving logs while minimizing privacy concerns.
 
 > [!WARNING]
-> Read the [Wiki](https://github.com/cryptozoide/MailLogSentinel/wiki) for more informations about this feature.
+> Read the [Wiki](https://github.com/monozoide/MailLogSentinel/wiki) for more informations about this feature.
 
 ### IP Information Utility (`ipinfo.py`)
 
@@ -223,7 +254,11 @@ The script can be configured via `maillogsentinel.conf` to specify paths for the
 
 ## Full documentation
 > [!IMPORTANT]
-> This is just an overview of how it works and features. For full documentation, please visit the [MailLogSentinel Wiki](https://github.com/cryptozoide/MailLogSentinel/wiki).
+> This is just an overview of how it works and features. For full user and administrator documentation, please visit the [MailLogSentinel Wiki](https://github.com/monozoide/MailLogSentinel/wiki).
+
+### API Documentation
+For developers interested in the internal workings or wanting to contribute to the codebase, API documentation generated from the source code is available:
+- [API Documentation](docs/api/maillogsentinel.html)
 
 ## Contributing
 All contributions are welcome—code, docs, ideas, bug reports!
@@ -263,9 +298,9 @@ This project is licensed under the GNU GPL v3. See [LICENSE](LICENSE) for detail
 ## Support
 > [!TIP]
 > As a free software enthusiast, I have devoted a large part of my life to using, promoting, and defending free and open source culture in all its forms. I develop these tools as a hobby, at my own pace, but I couldn’t accomplish anything without the extraordinary OSS ecosystem that inspires me every day.
- [!TIP]
+> 
 > To support the community, **30% of every donation** will be transparently redistributed to other open source projects. You can track the progress of these contributions and the breakdown of your support in the Wiki section of this repository, via a monthly financial report.
- [!TIP]
+ > 
 > Thank you for your trust and support! :sparkling_heart: 
 
 > [!IMPORTANT]

@@ -1,6 +1,6 @@
 .\" Man page for MailLogSentinel
 .\" Contact monozoide on GitHub for issues.
-.TH MAILLOGSENTINEL 8 "2023-10-27" "1.0.4-B" "MailLogSentinel Manual"
+.TH MAILLOGSENTINEL 8 "2025-06-27" "5.14.13" "MailLogSentinel Manual"
 
 .SH NAME
 maillogsentinel \- monitors and analyzes mail server authentication logs for intrusion attempts.
@@ -8,7 +8,7 @@ maillogsentinel \- monitors and analyzes mail server authentication logs for int
 .SH SYNOPSIS
 .B maillogsentinel
 [\fB\-\-config\fR \fIconfig_file\fR]
-[\fB\-\-setup\fR]
+[\fB\-\-setup\fR [\fB\-\-interactive\fR | \fB\-\-automated\fR \fIsource_config_file\fR]]
 [\fB\-\-report\fR]
 [\fB\-\-reset\fR]
 [\fB\-\-purge\fR]
@@ -19,15 +19,23 @@ maillogsentinel \- monitors and analyzes mail server authentication logs for int
 .P
 \fBMailLogSentinel\fR is a Python-based tool designed to monitor and analyze SASL (Simple Authentication and Security Layer) authentication logs from Postfix/Dovecot mail servers. Its primary goal is to detect and report potential intrusion attempts by identifying failed login events. It operates using Python 3 and standard libraries, making it lightweight and easy to integrate into existing server environments.
 .P
-Key functionalities include parsing SASL logs, incremental processing with offset tracking, handling of rotated and gzipped log files, storing detected attempts in a CSV file, performing reverse DNS lookups (with caching) for source IPs, generating daily email summaries with statistics and CSV attachment, and an interactive setup process.
+Key functionalities include parsing SASL logs, incremental processing with offset tracking, handling of rotated and gzipped log files, storing detected attempts in a CSV file, performing reverse DNS lookups (with caching) and IP geolocation (Country, ASN, ASO) for source IPs, generating daily email summaries with statistics and CSV attachment, and offering multiple setup modes.
 
 .SH OPTIONS
 .TP
 \fB\-\-config\fR \fIconfig_file\fR
 Specify the path to the configuration file. Defaults to \fI/etc/maillogsentinel.conf\fR.
 .TP
-\fB\-\-setup\fR
-Run the interactive first-time setup wizard. This is used to create the initial configuration file, define paths, and generate Systemd unit templates. Requires root (sudo) privileges. This process is also triggered automatically if the configuration file is not found. During setup, all console output is logged to \fBmaillogsentinel_setup.log\fR in the current working directory.
+\fB\-\-setup\fR [\fB\-\-interactive\fR | \fB\-\-automated\fR \fIsource_config_file\fR]
+Run the setup process. Requires root (sudo) privileges. This process is also triggered automatically if the configuration file is not found.
+.RS
+.TP
+\fB\-\-interactive\fR
+Run the interactive first-time setup wizard. This mode guides you through the configuration process step-by-step. Recommended for first-time users. Console output is logged to \fBmaillogsentinel_setup.log\fR in the current working directory.
+.TP
+\fB\-\-automated\fR \fIsource_config_file\fR
+Run the automated/silent setup using a pre-configured source file. Useful for deployments. Progress is primarily logged to \fBmaillogsentinel_setup.log\fR.
+.RE
 .TP
 \fB\-\-report\fR
 Generate and send the daily email summary report based on the data in the CSV file.
@@ -44,6 +52,26 @@ Show a help message and exit.
 \fB\-\-version\fR
 Show the script's version number and exit.
 
+.SH "PROGRESS DISPLAY"
+.TP
+\fBSetup Process\fR
+.RS
+.IP "\(bu" 2
+\fBInteractive Setup (\-\-setup \-\-interactive)\fR: Progress messages are printed to the console at each major step. A detailed log is also saved to \fBmaillogsentinel_setup.log\fR in the current working directory.
+.IP "\(bu" 2
+\fBAutomated Setup (\-\-setup \-\-automated)\fR: Minimal console output. Detailed progress is logged in \fBmaillogsentinel_setup.log\fR.
+.RE
+.TP
+\fBLog Extraction & Reporting\fR
+.RS
+.IP "\(bu" 2
+\fBDirect Execution\fR: Progress and errors are printed to the console based on the configured log level.
+.IP "\(bu" 2
+\fBSystemd Service\fR: All output (stdout and stderr) is directed to the Systemd journal (view with \fBjournalctl -u maillogsentinel.service\fR or \fBjournalctl -u maillogsentinel-report.service\fR).
+.IP "\(bu" 2
+\fBOperational Log File\fR: Detailed logs are written to the file specified in the configuration (e.g., \fI<working_dir>/maillogsentinel.log\fR).
+.RE
+
 .SH FILES
 .TP
 \fI/etc/maillogsentinel.conf\fR
@@ -51,6 +79,7 @@ The default configuration file.
 .TP
 \fI<working_dir>/maillogsentinel.csv\fR
 CSV file where detected authentication attempts are stored. \fI<working_dir>\fR is defined in the configuration file.
+The columns are: \fBserver, date, ip, user, hostname, reverse_dns_status, country_code, asn, aso\fR.
 .TP
 \fI<working_dir>/maillogsentinel.log\fR
 Operational log file for MailLogSentinel. \fI<working_dir>\fR is defined in the configuration file.
@@ -62,7 +91,7 @@ State file that stores the last processed log offset. \fI<state_dir>\fR is defin
 Log file created in the current working directory when \fB\-\-setup\fR is run, containing the transcript of the setup process.
 
 .SH CONFIGURATION
-MailLogSentinel is configured via an INI-style file, typically located at \fB/etc/maillogsentinel.conf\fR. The \fB\-\-setup\fR option is the recommended way to create this file.
+MailLogSentinel is configured via an INI-style file, typically located at \fB/etc/maillogsentinel.conf\fR. The \fB\-\-setup --interactive\fR option is the recommended way to create this file.
 .SS "[paths]"
 .TP
 \fBworking_dir\fR
@@ -107,6 +136,22 @@ Default: 128
 Time-to-live for cached DNS entries, in seconds.
 .br
 Default: 3600 (1 hour)
+.SS "[ipinfo]"
+.TP
+\fBcountry_db_path\fR
+Path to the IP geolocation country database (e.g., GeoLite2-Country.mmdb).
+.TP
+\fBasn_db_path\fR
+Path to the IP geolocation ASN database (e.g., GeoLite2-ASN.mmdb).
+.TP
+\fBdb_update_url_country\fR
+URL to download/update the country database.
+.TP
+\fBdb_update_url_asn\fR
+URL to download/update the ASN database.
+.P
+(Note: These \fBipinfo\fR settings are typically configured by \fBipinfo.py --update\fR or can be set up if using custom database locations/sources.)
+
 
 .SH PREREQUISITES
 .IP "1." 4
@@ -130,7 +175,21 @@ Root (`sudo`) privileges for the \fB\-\-setup\fR command.
 .P
 Triggered by the \fB\-\-report\fR option, daily email reports include:
 .IP \(bu 2
-Summary statistics: total failed attempts, top 10 failed authentications (user, IP, hostname), top 10 usernames, and reverse DNS failure summary.
+Header with MailLogSentinel version, extraction interval, report timestamp, and server details.
+.IP \(bu 2
+Total failed attempts for the reporting period.
+.IP \(bu 2
+Top 10 failed authentications (user, IP, hostname, country, number of times).
+.IP \(bu 2
+Top 10 usernames involved in failed attempts.
+.IP \(bu 2
+Top 10 countries from which attempts originated.
+.IP \(bu 2
+Top 10 ASNs (Autonomous System Numbers) associated with source IPs.
+.IP \(bu 2
+Top 10 ASOs (Autonomous System Organizations) associated with source IPs.
+.IP \(bu 2
+Summary of reverse DNS lookup failures, broken down by error type.
 .IP \(bu 2
 Overall CSV file size and total line count.
 .IP \(bu 2
@@ -138,7 +197,7 @@ The full \fBmaillogsentinel.csv\fR file as an attachment.
 
 .SH "AUTOMATED EXECUTION (SYSTEMD)"
 .P
-The \fB\-\-setup\fR process generates example Systemd unit files:
+The \fB\-\-setup\fR process (especially \fB\-\-interactive\fR) generates example Systemd unit files:
 .IP \(bu 2
 \fBmaillogsentinel.service\fR: Runs log extraction.
 .IP \(bu 2
@@ -154,20 +213,25 @@ Users must review, customize (especially the `User=` directive and paths), and t
 .P
 1. Run interactive setup (as root):
 .EX
-sudo maillogsentinel --setup
+sudo maillogsentinel --setup --interactive
 .EE
 .P
-2. Process logs using a specific configuration file:
+2. Run automated setup using a source configuration file (as root):
+.EX
+sudo maillogsentinel --setup --automated /path/to/source_maillogsentinel.conf
+.EE
+.P
+3. Process logs using a specific configuration file:
 .EX
 maillogsentinel --config /opt/custom/maillog.conf
 .EE
 .P
-3. Generate and send the daily email report:
+4. Generate and send the daily email report:
 .EX
 maillogsentinel --report
 .EE
 .P
-4. Reset log processing state, archiving old data:
+5. Reset log processing state, archiving old data:
 .EX
 maillogsentinel --reset
 .EE
@@ -192,22 +256,22 @@ Basic usage:
 \fBbin/log_anonymizer.py\fR \fI<input_log_file>\fR \fI<output_anonymized_log_file>\fR [\fIoptions\fR]
 .EE
 .P
-For more detailed options, refer to the script's help message (\fBbin/log_anonymizer.py --help\fR) or the project's README/Wiki.
+For more detailed options, refer to the script's help message (\fBbin/log_anonymizer.py --help\fR) or the project's Wiki.
 .SS ipinfo.py
 .P
-A command-line tool and library for looking up IP address geolocation information such as country, ASN (Autonomous System Number), and ASO (Autonomous System Organization). It utilizes local databases which can be downloaded and updated.
+A command-line tool and library for looking up IP address geolocation information such as country, ASN (Autonomous System Number), and ASO (Autonomous System Organization). It utilizes local databases which can be downloaded and updated. MailLogSentinel uses this utility for enriching its reports.
 .P
 The default IP geolocation databases (country and ASN) utilized by \fBipinfo.py\fR are sourced from the \fIsapics/ip-location-db\fR project on GitHub by user 'sapics'. These databases are provided under the Creative Commons Zero (CC0) license. The project can be found at \fIhttps://github.com/sapics/ip-location-db\fR.
 .P
 Primary command-line operations:
 .IP "\(bu" 2
-\fBbin/ipinfo.py --update\fR: Downloads or updates the IP geolocation databases.
+\fBbin/ipinfo.py --update\fR: Downloads or updates the IP geolocation databases. Configuration for database paths and URLs can be managed in \fBmaillogsentinel.conf\fR under the `[ipinfo]` section or overridden by command-line arguments.
 .IP "\(bu" 2
 \fBbin/ipinfo.py\fR \fI<IP_ADDRESS>\fR: Looks up information for a specific IP address.
 .IP "\(bu" 2
-\fBbin/ipinfo.py --config\fR \fI<path_to_maillogsentinel.conf>\fR: Uses database paths and download URLs specified in the MaillogSentinel configuration file.
+\fBbin/ipinfo.py --config\fR \fI<path_to_maillogsentinel.conf>\fR: Explicitly uses database paths and download URLs specified in the MaillogSentinel configuration file for its operations.
 .P
-Database paths and download URLs can be configured via command-line arguments or by reading settings from \fBmaillogsentinel.conf\fR.
+Database paths and download URLs can be configured via command-line arguments or by reading settings from \fBmaillogsentinel.conf\fR (see CONFIGURATION section).
 
 .SH AUTHOR
 Written by monozoide. See <https://github.com/monozoide/MailLogSentinel>.
@@ -215,12 +279,22 @@ Written by monozoide. See <https://github.com/monozoide/MailLogSentinel>.
 .SH "REPORTING BUGS"
 Report bugs to the GitHub issues page: <https://github.com/monozoide/MailLogSentinel/issues>.
 
+.SH DOCUMENTATION
+.TP
+\fBProject Wiki\fR
+For full user and administrator documentation, please visit the MailLogSentinel Wiki: <https://github.com/monozoide/MailLogSentinel/wiki>.
+.TP
+\fBAPI Documentation\fR
+For developers, API documentation is available at: <https://monozoide.github.io/MailLogSentinel/api/maillogsentinel.html> (adjust path if served locally from docs/api/maillogsentinel.html).
+
+
 .SH "SEE ALSO"
 .BR fail2ban (1),
 .BR rsyslog.conf (5),
 .BR syslog-ng.conf (5),
 .BR systemd.service (5),
 .BR systemd.timer (5),
-.BR crontab (5)
+.BR crontab (5),
+.BR ipinfo.py (1) (if installed as a separate command)
 
 .\" END OF MAN PAGE

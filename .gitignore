@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+*.log
+logs/
+# Test artifacts
+/tests/__pycache__/
+/tests/**/__pycache__/
+*.coverage
+coverage/
+.coverage
+.tox/
+pytest_cache/
