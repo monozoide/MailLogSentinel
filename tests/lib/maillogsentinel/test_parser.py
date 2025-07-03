@@ -443,3 +443,124 @@ def test_extract_entries_file_stat_error(
     mock_logger.error.assert_any_call(
         f"Could not get size of {unstattable_file}: Mocked stat error"
     )
+
+
+def test_extract_entries_false_rotation_scenario(
+    tmp_path: Path,
+    mock_logger: MagicMock,
+    mock_ip_info_mgr: MagicMock,
+    mock_reverse_lookup_func: MagicMock,
+    current_year: int,
+):
+    """
+    Tests the specific scenario where a smaller rotated log file might cause
+    a false rotation detection on the main log file if offset logic is incorrect.
+    """
+    # Ensure rotated_log_content is significantly shorter than main_log_line1
+    rotated_log_content = "Mar 15 09:00:00 serverR postfix/smtpd[R01]: client=unknown[8.8.8.8], sasl_username=short_user\n"
+    main_log_line1 = "Mar 15 10:00:00 serverMainLog postfix/submission/smtpd[MainLog01]: client=unknown[1.1.1.1], sasl_method=PLAIN, sasl_username=mainloguser1@example.com\n"
+    main_log_line2 = "Mar 15 10:05:00 serverMainLog postfix/submission/smtpd[MainLog02]: client=unknown[2.2.2.2], sasl_method=PLAIN, sasl_username=mainloguser2@example.com\n"
+
+    rotated_log_path = tmp_path / "mail.log.1"
+    main_log_path = tmp_path / "mail.log"
+    csv_output_path = tmp_path / "output.csv"
+
+    # Write content to rotated log
+    rotated_log_path.write_text(rotated_log_content)
+
+    # Write content to main log
+    main_log_path.write_text(main_log_line1 + main_log_line2)
+
+    # Simulate that main_log_line1 has already been processed
+    # The offset should be the size of the first line of the main log.
+    # Crucially, this offset is larger than the total size of `rotated_log_path`.
+    initial_offset = len(main_log_line1.encode("utf-8"))
+    assert (
+        initial_offset > rotated_log_path.stat().st_size
+    ), "Test setup error: initial_offset must be greater than rotated_log_path size"
+
+    # Mock DNS and IP lookups
+    # Order: rotated_user, mainuser2 (since mainuser1 is skipped due to offset)
+    mock_reverse_lookup_func.side_effect = [
+        ("rotated_host.com", None),
+        ("mainhost2.com", None),
+    ]
+    mock_ip_info_mgr.lookup_ip_info.side_effect = [
+        {"country_code": "CR", "asn": "ASR", "aso": "ISPR"},  # For rotated_user
+        {"country_code": "C2", "asn": "AS2", "aso": "ISP2"},  # For mainuser2
+    ]
+
+    # The order of filepaths matters: typically oldest first.
+    # extract_entries processes them in the given order.
+    # The key is that maillog_path_obj is correctly identified for offset logic.
+    returned_offset = extract_entries(
+        filepaths=[rotated_log_path, main_log_path],  # Process rotated first, then main
+        maillog_path_obj=main_log_path,  # Crucial: identify the main log
+        csvpath_param=str(csv_output_path),
+        logger=mock_logger,
+        ip_info_mgr=mock_ip_info_mgr,
+        reverse_lookup_func=mock_reverse_lookup_func,
+        is_gzip_func=is_gzip,
+        offset=initial_offset,  # Offset for main_log_path
+        progress_callback=None,
+    )
+
+    # Verify no false rotation detection message for main_log_path
+    # This means logger.info was NOT called with a message containing "Rotation detected for mail.log"
+    # We check calls to logger.info
+    rotation_detection_call_main_log = f"Rotation detected for {main_log_path.name}, resetting offset {initial_offset} -> 0"
+    for call_args in mock_logger.info.call_args_list:
+        assert (
+            rotation_detection_call_main_log not in call_args[0][0]
+        ), "False rotation detected for main log file"
+
+    with csv_output_path.open("r") as f:
+        reader = csv.reader(f, delimiter=";")
+        rows = list(reader)
+
+    assert len(rows) == 3  # Header + 1 from rotated + 1 from main (mainuser2)
+
+    # Check header
+    assert rows[0] == [
+        "server",
+        "date",
+        "ip",
+        "user",
+        "hostname",
+        "reverse_dns_status",
+        "country_code",
+        "asn",
+        "aso",
+    ]
+    # Check entry from rotated log (should always be processed fully)
+    assert rows[1] == [
+        "serverR",
+        f"15/03/{current_year} 09:00",
+        "8.8.8.8",
+        "short_user",  # Corrected username
+        "rotated_host.com",
+        "OK",
+        "CR",
+        "ASR",
+        "ISPR",
+    ]
+    # Check entry from main log (only mainuser2, as mainuser1 was skipped by offset)
+    assert rows[2] == [
+        "serverMainLog",
+        f"15/03/{current_year} 10:05",
+        "2.2.2.2",
+        "mainloguser2@example.com",  # Corrected server and username
+        "mainhost2.com",
+        "OK",
+        "C2",
+        "AS2",
+        "ISP2",
+    ]
+
+    # The returned offset should be the full size of the main_log_path,
+    # as it was processed starting from initial_offset.
+    assert returned_offset == main_log_path.stat().st_size
+    # Ensure that the initial_offset for the main log was respected and we didn't re-read main_log_line1
+    mock_logger.debug.assert_any_call(
+        f"Incremental read of {main_log_path.name} from offset {initial_offset}"
+    )

@@ -21,11 +21,13 @@ import logging
 import sys
 
 # Add bin directory to sys.path to allow importing ipinfo
-sys.path.append(str(Path(__file__).resolve().parent.parent.parent / "bin"))
+# sys.path.append(str(Path(__file__).resolve().parent.parent.parent / "bin")) # Removed for cleaner path management
 import ipinfo
 
 # Local imports
-from .log_utils import _parse_log_line  # Import the centralized function
+from lib.maillogsentinel.log_utils import (
+    _parse_log_line,
+)  # Import the centralized function
 
 
 # Constants are now in log_utils.py
@@ -89,7 +91,7 @@ def extract_entries(
         after processing it, or the previous offset if `maillog_path_obj`
         was not processed or rotated.
     """
-    curr_off = offset
+    # curr_off is initialized per file inside the loop.
     new_off = offset  # Will be updated only if maillog_path_obj is processed
     csv_file_path = Path(csvpath_param)
     header = not csv_file_path.is_file()
@@ -131,14 +133,18 @@ def extract_entries(
                     # and calling the progress_callback.
                     continue
 
-                # Handle offset and rotation for the main log file
+                # Initialize curr_off for the current file
+                current_file_offset = 0
                 if path_obj == maillog_path_obj:
-                    if path_size < curr_off:
+                    current_file_offset = (
+                        offset  # Use the passed offset for the main log
+                    )
+                    if path_size < current_file_offset:
                         logger.info(
-                            f"Rotation detected for {path_obj.name}, resetting offset {curr_off} -> 0"
+                            f"Rotation detected for {path_obj.name}, resetting offset {current_file_offset} -> 0"
                         )
-                        curr_off = 0
-                # For rotated files, curr_off is effectively 0 as they are read from the start.
+                        current_file_offset = 0
+                # For rotated files, current_file_offset remains 0, meaning they are read from the start.
 
                 is_gzipped_file = is_gzip_func(path_obj)
                 file_open_mode = "rt"  # Text mode for both gzip and regular files
@@ -164,9 +170,9 @@ def extract_entries(
                         # Only seek if it's the main log file and being read incrementally
                         if path_obj == maillog_path_obj:
                             logger.debug(
-                                f"Incremental read of {path_obj.name} from offset {curr_off}"
+                                f"Incremental read of {path_obj.name} from offset {current_file_offset}"
                             )
-                            fobj.seek(curr_off)
+                            fobj.seek(current_file_offset)
                         else:
                             logger.debug(
                                 f"Reading rotated file {path_obj.name} from beginning"
