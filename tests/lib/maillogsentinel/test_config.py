@@ -278,3 +278,89 @@ state_dir = my_state
     assert (
         config.state_dir == Path(DEFAULT_CONFIG["paths"]["working_dir"]) / "my_state"
     )  # Uses default working_dir for relative path
+
+
+def test_appconfig_new_sections_defaults(tmp_path: Path, mock_logger: MagicMock):
+    """Test AppConfig loads default values for new SQL-related sections."""
+    non_existent_path = tmp_path / "non_existent_for_new_defaults.conf"
+    config = AppConfig(non_existent_path, logger=mock_logger)
+
+    assert not config.config_loaded_successfully
+
+    # Check defaults for [sqlite_database]
+    assert config.sqlite_db_type == DEFAULT_CONFIG["sqlite_database"]["db_type"]
+    assert config.sqlite_db_path == Path(
+        DEFAULT_CONFIG["sqlite_database"]["db_path"]
+    )  # Path conversion happens
+    assert config.sqlite_user == DEFAULT_CONFIG["sqlite_database"]["user"]
+    assert (
+        config.sqlite_password_hash
+        == DEFAULT_CONFIG["sqlite_database"]["password_hash"]
+    )
+    assert config.sqlite_salt == DEFAULT_CONFIG["sqlite_database"]["salt"]
+
+    # Check defaults for [sql_export_systemd]
+    assert (
+        config.sql_export_frequency == DEFAULT_CONFIG["sql_export_systemd"]["frequency"]
+    )
+
+    # Check defaults for [sql_import_systemd]
+    assert (
+        config.sql_import_frequency == DEFAULT_CONFIG["sql_import_systemd"]["frequency"]
+    )
+
+    # Check defaults for [sql_export_settings]
+    assert (
+        config.sql_column_mapping_file_path_str
+        == DEFAULT_CONFIG["sql_export_settings"]["column_mapping_file"]
+    )
+    assert (
+        config.sql_target_table_name
+        == DEFAULT_CONFIG["sql_export_settings"]["table_name"]
+    )
+
+
+def test_appconfig_new_sections_from_file(tmp_path: Path, mock_logger: MagicMock):
+    """Test AppConfig loads values from file for new SQL-related sections."""
+    content = """
+[sqlite_database]
+db_type = test_sqlite
+db_path = /tmp/test.db
+user = test_user
+# password_hash and salt would be set by setup, not typically in a raw config by user for SQLite
+
+[sql_export_systemd]
+frequency = every 10 minutes
+
+[sql_import_systemd]
+frequency = every 15 minutes
+
+[sql_export_settings]
+column_mapping_file = /etc/maillog_map.json
+table_name = my_event_log
+"""
+    config_file = create_config_file(tmp_path, content)
+    config = AppConfig(config_file, logger=mock_logger)
+
+    assert config.config_loaded_successfully
+
+    # Check values from file for [sqlite_database]
+    assert config.sqlite_db_type == "test_sqlite"
+    assert config.sqlite_db_path == Path("/tmp/test.db")
+    assert config.sqlite_user == "test_user"
+    # password_hash and salt will be empty string if not in file, as per _get_str default behavior with DEFAULT_CONFIG
+    assert (
+        config.sqlite_password_hash
+        == DEFAULT_CONFIG["sqlite_database"]["password_hash"]
+    )
+    assert config.sqlite_salt == DEFAULT_CONFIG["sqlite_database"]["salt"]
+
+    # Check values from file for [sql_export_systemd]
+    assert config.sql_export_frequency == "every 10 minutes"
+
+    # Check values from file for [sql_import_systemd]
+    assert config.sql_import_frequency == "every 15 minutes"
+
+    # Check values from file for [sql_export_settings]
+    assert config.sql_column_mapping_file_path_str == "/etc/maillog_map.json"
+    assert config.sql_target_table_name == "my_event_log"

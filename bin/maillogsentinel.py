@@ -55,6 +55,8 @@ from lib.maillogsentinel.config import (
 from lib.maillogsentinel.parser import extract_entries
 from lib.maillogsentinel.dns_utils import initialize_dns_cache, reverse_lookup
 from lib.maillogsentinel.report import send_report
+from lib.maillogsentinel.sql_exporter import run_sql_export
+from lib.maillogsentinel.sql_importer import run_sql_import  # New import
 
 # --- Global IPInfoManager ---
 IP_INFO_MANAGER: Optional[ipinfo.IPInfoManager] = None
@@ -126,6 +128,16 @@ def main():
         action="version",
         version=f"%(prog)s {VERSION}",
         help="Show program's version number and exit.",
+    )
+    parser.add_argument(
+        "--sql-export",
+        action="store_true",
+        help="Export new log entries from CSV to an SQL file.",
+    )
+    parser.add_argument(
+        "--sql-import",
+        action="store_true",
+        help="Import .sql files from the SQL export directory into the database.",
     )
     # --output-file argument is removed
     args = parser.parse_args()
@@ -746,6 +758,64 @@ def main():
         progress_tracker.finalize(
             False, f"{SCRIPT_NAME} encountered errors."
         )  # Translated # Updated call
+
+    # --- SQL Export Mode ---
+    if args.sql_export:
+        if (
+            not overall_success_flag
+        ):  # Checks if initializations like config, logging, paths were okay
+            progress_tracker.finalize(
+                False,
+                "Cannot proceed with SQL export due to previous initialization errors.",
+            )
+            sys.exit(1)
+
+        progress_tracker.print_message("Starting SQL export process...", level="info")
+
+        # The AppConfig (app_config) and logger should already be initialized from the common block.
+        # Paths (workdir, statedir etc.) should also be initialized.
+        # IP_INFO_MANAGER and DNS cache also initialized if overall_success_flag is true.
+
+        # Directly call run_sql_export
+        # Ensure sql_exporter.py is adapted to use AppConfig object correctly.
+        export_successful = run_sql_export(
+            config=app_config, output_log_level=app_config.log_level
+        )
+
+        if export_successful:
+            progress_tracker.finalize(True, "SQL export completed successfully.")
+            logger.info(f"=== End of {SCRIPT_NAME} execution (SQL export mode) ===")
+        else:
+            progress_tracker.finalize(False, "SQL export failed.")
+            logger.error(f"=== {SCRIPT_NAME} execution failed (SQL export mode) ===")
+        sys.exit(0 if export_successful else 1)
+
+    # --- SQL Import Mode ---
+    if args.sql_import:
+        if (
+            not overall_success_flag
+        ):  # Checks if initializations like config, logging, paths were okay
+            progress_tracker.finalize(
+                False,
+                "Cannot proceed with SQL import due to previous initialization errors.",
+            )
+            sys.exit(1)
+
+        progress_tracker.print_message("Starting SQL import process...", level="info")
+
+        # AppConfig, logger, paths should be initialized from the common block.
+
+        import_successful = run_sql_import(
+            config=app_config, output_log_level=app_config.log_level
+        )
+
+        if import_successful:
+            progress_tracker.finalize(True, "SQL import completed successfully.")
+            logger.info(f"=== End of {SCRIPT_NAME} execution (SQL import mode) ===")
+        else:
+            progress_tracker.finalize(False, "SQL import failed.")
+            logger.error(f"=== {SCRIPT_NAME} execution failed (SQL import mode) ===")
+        sys.exit(0 if import_successful else 1)
 
 
 if __name__ == "__main__":

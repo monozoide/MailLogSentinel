@@ -1,0 +1,12 @@
+{
+  "id": {"sql_column_def": "INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY", "csv_column_name": "csv_id_placeholder"},
+  "server": {"sql_column_def": "VARCHAR(50) NOT NULL", "csv_column_name": "server"},
+  "event_time": {"sql_column_def": "DATETIME NOT NULL", "csv_column_name": "date"},
+  "ip": {"sql_column_def": "VARCHAR(45) NOT NULL", "csv_column_name": "ip"},
+  "username": {"sql_column_def": "VARCHAR(100) NOT NULL", "csv_column_name": "user"},
+  "hostname": {"sql_column_def": "VARCHAR(255) DEFAULT NULL", "csv_column_name": "hostname"},
+  "reverse_dns_status": {"sql_column_def": "ENUM('OK', 'ERRNO 1', 'ERRNO 2', 'ERRNO 3', 'ERRNO 4') NOT NULL", "csv_column_name": "reverse_dns_status"},
+  "country_code": {"sql_column_def": "CHAR(2) NOT NULL", "csv_column_name": "country_code"},
+  "asn_int": {"sql_column_def": "INT UNSIGNED NOT NULL", "csv_column_name": "asn"},
+  "asn_varchar": {"sql_column_def": "VARCHAR(255) NOT NULL", "csv_column_name": "aso"}
+}

@@ -148,6 +148,76 @@ def _change_ownership(path_to_change, user_name, setup_log_fh):
 # The _update_progress_display function was already simplified.
 
 
+def validate_calendar_expression(
+    calendar_str: str, setup_log_fh, default_fallback_expr: str
+) -> str:
+    """
+    Validates a Systemd OnCalendar string using 'systemd-analyze calendar'.
+
+    Args:
+        calendar_str: The OnCalendar string to validate.
+        setup_log_fh: File handle for logging.
+        default_fallback_expr: The default expression to return if validation fails.
+
+    Returns:
+        The original calendar_str if valid, otherwise default_fallback_expr.
+    """
+    if not calendar_str:
+        _setup_print_and_log(
+            f"WARNING: Calendar string is empty. Falling back to default: {default_fallback_expr}",
+            setup_log_fh,
+        )
+        return default_fallback_expr
+
+    systemd_analyze_cmd = shutil.which("systemd-analyze")
+    if not systemd_analyze_cmd:
+        _setup_print_and_log(
+            "WARNING: 'systemd-analyze' command not found. Cannot validate OnCalendar expressions. "
+            f"Using provided value '{calendar_str}' without validation, assuming it is correct or relying on Systemd's own error handling later."
+            " This is not ideal. Falling back to default to be safe.",
+            setup_log_fh,
+        )
+        # If validation tool is missing, fall back to default to be safe.
+        return default_fallback_expr
+
+    try:
+        # We add --iterations=1 to make it faster and avoid it hanging or producing too much output.
+        process = subprocess.run(
+            [systemd_analyze_cmd, "calendar", "--iterations=1", calendar_str],
+            capture_output=True,
+            text=True,
+            check=False,  # Do not raise exception on non-zero exit
+        )
+        if process.returncode == 0:
+            _setup_print_and_log(
+                f"Calendar expression '{calendar_str}' validated successfully.",
+                setup_log_fh,
+                console_out=False,
+            )  # Log success only to file
+            return calendar_str
+        else:
+            _setup_print_and_log(
+                f"WARNING: Invalid Systemd OnCalendar expression: '{calendar_str}'. "
+                f"Error: {process.stderr.strip()}. Falling back to default: {default_fallback_expr}",
+                setup_log_fh,
+            )
+            return default_fallback_expr
+    except FileNotFoundError: # Should be caught by shutil.which already, but as a safeguard.
+        _setup_print_and_log(
+            "WARNING: 'systemd-analyze' command not found during execution attempt. Cannot validate OnCalendar expressions. "
+            f"Falling back to default: {default_fallback_expr}", # Also fallback here
+            setup_log_fh,
+        )
+        return default_fallback_expr
+    except Exception as e:
+        _setup_print_and_log(
+            f"WARNING: An unexpected error occurred while validating calendar expression '{calendar_str}': {e}. "
+            f"Falling back to default: {default_fallback_expr}",
+            setup_log_fh,
+        )
+        return default_fallback_expr
+
+
 # Helper function for progress display
 def _update_progress_display(message: str, setup_log_fh):
     """Prints a progress message to console and log."""
@@ -324,6 +394,19 @@ def interactive_cli_setup(target_config_path, setup_log_fh):
             "log_file_backup_count": "5",
         },
         "dns_cache": {"enabled": "True", "size": "128", "ttl_seconds": "3600"},
+        "sqlite_database": {
+            "db_type": "sqlite3",  # Fixed for now
+            "db_path": "/var/lib/maillogsentinel/maillogsentinel.sqlite",
+            "user": "",  # Not used for SQLite
+            "password_hash": "",  # Not used for SQLite
+            "salt": "",  # Not used for SQLite
+        },
+        "sql_export_systemd": {
+            "frequency": "*:0/4",
+        },
+        "sql_import_systemd": {
+            "frequency": "*:0/5",
+        },
     }
     collected_config = copy.deepcopy(default_config_values)
     sections_to_configure = [
@@ -333,6 +416,9 @@ def interactive_cli_setup(target_config_path, setup_log_fh):
         "ASN_ASO",
         "general",
         "dns_cache",
+        "sqlite_database",
+        "sql_export_systemd",
+        "sql_import_systemd",
     ]
     allowed_log_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 
@@ -393,6 +479,34 @@ def interactive_cli_setup(target_config_path, setup_log_fh):
                             info_text = "Non-negative integer."
                             is_an_int = True
                             is_nn_int = True
+                    elif section_name == "sqlite_database":
+                        if key == "db_type":
+                            # Fixed for now, so skip prompt and use default.
+                            collected_config[section_name][key] = str(default_value)
+                            _setup_print_and_log(
+                                f"  Set [{section_name}] {key} = {str(default_value)} (fixed to sqlite3 for now)",
+                                setup_log_fh,
+                                console_out=False,
+                            )
+                            continue  # Skip to next key
+                        elif key == "db_path":
+                            is_a_path = True
+                            info_text = "Path to the SQLite database file."
+                        elif key in ["user", "password_hash", "salt"]:
+                            # Not used for SQLite, skip prompt and use default (empty).
+                            collected_config[section_name][key] = str(default_value)
+                            _setup_print_and_log(
+                                f"  Set [{section_name}] {key} = '{str(default_value)}' (not used for SQLite)",
+                                setup_log_fh,
+                                console_out=False,
+                            )
+                            continue  # Skip to next key
+                    elif section_name == "sql_export_systemd":
+                        if key == "frequency":
+                            info_text = "Systemd OnCalendar format only (e.g., *:0/4, hourly, 08:30)."
+                    elif section_name == "sql_import_systemd":
+                        if key == "frequency":
+                            info_text = "Systemd OnCalendar format only (e.g., *:0/5, 02:00)."
 
                     # Only call _get_cli_input if not skipped above
                     user_input_str = _get_cli_input(
@@ -411,6 +525,14 @@ def interactive_cli_setup(target_config_path, setup_log_fh):
                     processed_value = user_input_str
                     if section_name == "general" and key == "log_level":
                         processed_value = user_input_str.upper()
+                    elif section_name == "sql_export_systemd" and key == "frequency":
+                        processed_value = validate_calendar_expression(
+                            user_input_str, setup_log_fh, "*:0/4" # Default fallback for export
+                        )
+                    elif section_name == "sql_import_systemd" and key == "frequency":
+                        processed_value = validate_calendar_expression(
+                            user_input_str, setup_log_fh, "*:0/5" # Default fallback for import
+                        )
 
                     collected_config[section_name][key] = str(processed_value)
                     _setup_print_and_log(
@@ -430,24 +552,34 @@ def interactive_cli_setup(target_config_path, setup_log_fh):
             setup_log_fh,
             info_text="Systemd OnCalendar format or keywords like hourly, daily.",
         )
+        extraction_schedule_str = validate_calendar_expression(
+            extraction_schedule_str, setup_log_fh, "hourly"
+        )
 
         while True:
-            report_time_str = _get_cli_input(
+            raw_report_time_str = _get_cli_input(
                 "Daily report OnCalendar value (e.g., '08:50', 'daily', '*-*-* HH:MM:SS')",
-                "daily",
+                "daily", # Default input to _get_cli_input
                 setup_log_fh,
                 info_text="Systemd OnCalendar format.",
             )
-            if re.fullmatch(r"\d{2}:\d{2}", report_time_str):
-                h, m = map(int, report_time_str.split(":"))
+            # Validate the raw input first
+            validated_report_time_str = validate_calendar_expression(
+                raw_report_time_str, setup_log_fh, "daily" # Fallback for validation
+            )
+
+            if re.fullmatch(r"\d{2}:\d{2}", validated_report_time_str):
+                h, m = map(int, validated_report_time_str.split(":"))
                 report_on_calendar_formatted = f"*-*-* {h:02d}:{m:02d}:00"
                 break
-            elif report_time_str.lower() == "daily":
-                report_on_calendar_formatted = "*-*-* 23:59:59"
-                break  # Default end of day
+            elif validated_report_time_str.lower() == "daily":
+                report_on_calendar_formatted = "*-*-* 23:59:59" # Systemd 'daily' often means midnight
+                break
             else:
-                report_on_calendar_formatted = report_time_str
-                break  # Assume valid OnCalendar string
+                # If already validated and not HH:MM or 'daily', use as is
+                # (assuming it's a more complex valid OnCalendar string)
+                report_on_calendar_formatted = validated_report_time_str
+                break
 
         ip_update_schedule_str = _get_cli_input(
             "IP DB update frequency (e.g., 'daily', '0 2 * * 1')",
@@ -455,6 +587,36 @@ def interactive_cli_setup(target_config_path, setup_log_fh):
             setup_log_fh,
             info_text="Systemd OnCalendar format.",
         )
+        ip_update_schedule_str = validate_calendar_expression(
+            ip_update_schedule_str, setup_log_fh, "daily"
+        )
+
+        # Get SQL export and import schedules
+        sql_export_schedule_str = _get_cli_input(
+            "SQL export frequency",
+            collected_config["sql_export_systemd"]["frequency"],  # Default from config
+            setup_log_fh,
+            info_text="Systemd OnCalendar format only (e.g., *:0/4, hourly, 08:30).",
+        )
+        sql_export_schedule_str = validate_calendar_expression(
+            sql_export_schedule_str, setup_log_fh, "*:0/4"
+        )
+        collected_config["sql_export_systemd"][
+            "frequency"
+        ] = sql_export_schedule_str  # Update collected config
+
+        sql_import_schedule_str = _get_cli_input(
+            "SQL import frequency",
+            collected_config["sql_import_systemd"]["frequency"],  # Default from config
+            setup_log_fh,
+            info_text="Systemd OnCalendar format only (e.g., *:0/5, 02:00).",
+        )
+        sql_import_schedule_str = validate_calendar_expression(
+            sql_import_schedule_str, setup_log_fh, "*:0/5"
+        )
+        collected_config["sql_import_systemd"][
+            "frequency"
+        ] = sql_import_schedule_str  # Update collected config
 
         suggested_user = os.environ.get("SUDO_USER", getpass.getuser())
         suggested_user = (
@@ -506,6 +668,12 @@ def interactive_cli_setup(target_config_path, setup_log_fh):
         )
         _setup_print_and_log(
             f"  ip_update_schedule = {ip_update_schedule_str}", setup_log_fh
+        )
+        _setup_print_and_log(
+            f"  sql_export_schedule = {sql_export_schedule_str}", setup_log_fh
+        )
+        _setup_print_and_log(
+            f"  sql_import_schedule = {sql_import_schedule_str}", setup_log_fh
         )
         _setup_print_and_log(f"  run_as_user = {run_as_user}", setup_log_fh)
 
@@ -619,6 +787,8 @@ def interactive_cli_setup(target_config_path, setup_log_fh):
             report_on_calendar_formatted,
             ip_update_schedule_str,
             ipinfo_script_path_sysd,
+            sql_export_schedule_str,  # New
+            sql_import_schedule_str,  # New
         )
 
         install_systemd = _get_cli_input(
@@ -740,6 +910,8 @@ def interactive_cli_setup(target_config_path, setup_log_fh):
                         "maillogsentinel-extract.timer",
                         "maillogsentinel-report.timer",
                         "ipinfo-update.timer",
+                        "maillogsentinel-sql-export.timer",  # New
+                        "maillogsentinel-sql-import.timer",  # New
                     ]:
                         if (Path("/etc/systemd/system") / timer_name).exists():
                             try:
@@ -814,7 +986,7 @@ def non_interactive_setup(source_config_path: Path, setup_log_fh):
     import traceback
 
     print("non_interactive_setup CALLED", flush=True)
-    traceback.print_stack(file=sys.stdout, limit=10)
+    # traceback.print_stack(file=sys.stdout, limit=10) # Removed for debugging
     print("---", flush=True)
 
     _setup_print_and_log(f"--- MailLogSentinel Non-Interactive Setup ---", setup_log_fh)
@@ -858,6 +1030,7 @@ def non_interactive_setup(source_config_path: Path, setup_log_fh):
         "report": ["email"],
         "general": ["log_level"],
         "User": ["run_as_user"],
+        # sqlite_database, sql_export_systemd, sql_import_systemd are optional for non-interactive
     }
     for section, keys in required_sections.items():
         if not config.has_section(section):
@@ -1039,6 +1212,32 @@ def non_interactive_setup(source_config_path: Path, setup_log_fh):
             f"WARN: ipinfo.py script not found at {ipinfo_script_path}", setup_log_fh
         )
 
+    # Get SQL export and import schedules from config, with defaults
+    sql_export_schedule_str = config.get(
+        "sql_export_systemd", "frequency", fallback="*:0/4"
+    )
+    sql_export_schedule_str = validate_calendar_expression(
+        sql_export_schedule_str, setup_log_fh, "*:0/4"
+    )
+    sql_import_schedule_str = config.get(
+        "sql_import_systemd", "frequency", fallback="*:0/5"
+    )
+    sql_import_schedule_str = validate_calendar_expression(
+        sql_import_schedule_str, setup_log_fh, "*:0/5"
+    )
+
+    # Validate other schedules as well
+    extraction_schedule_str = validate_calendar_expression(
+        extraction_schedule_str, setup_log_fh, "hourly"
+    )
+    report_on_calendar = validate_calendar_expression(
+        report_on_calendar, setup_log_fh, "daily" # Assuming 'daily' implies a valid Systemd value like 00:00 or similar
+    )
+    ip_update_schedule_str = validate_calendar_expression(
+        ip_update_schedule_str, setup_log_fh, "daily"
+    )
+
+
     unit_files_content = _generate_systemd_units_content(
         run_as_user,
         python_executable,
@@ -1049,6 +1248,8 @@ def non_interactive_setup(source_config_path: Path, setup_log_fh):
         report_on_calendar,
         ip_update_schedule_str,
         ipinfo_script_path,
+        sql_export_schedule_str,  # New
+        sql_import_schedule_str,  # New
     )
     systemd_dir_path = Path("/etc/systemd/system/")  # Restored
     temp_dir_obj_units = tempfile.TemporaryDirectory(prefix="mls_units_")
@@ -1130,6 +1331,8 @@ def non_interactive_setup(source_config_path: Path, setup_log_fh):
         "maillogsentinel-extract.timer",
         "maillogsentinel-report.timer",
         "ipinfo-update.timer",
+        "maillogsentinel-sql-export.timer",  # New
+        "maillogsentinel-sql-import.timer",  # New
     ]
     for timer in timers_to_enable:
         if not (systemd_dir_path / timer).exists():
@@ -1172,6 +1375,8 @@ def _generate_systemd_units_content(
     report_sched,
     ip_update_sched,
     ipinfo_script_path,
+    sql_export_schedule,  # New
+    sql_import_schedule,  # New
 ):
     _setup_print_and_log(
         f"Generating systemd units with user={run_as_user}, script={script_path}", None
@@ -1182,6 +1387,15 @@ def _generate_systemd_units_content(
     maillogsentinel_report_timer_content = f"""[Unit]\nDescription=Run MailLogSentinel Daily Report\n\n[Timer]\nUnit=maillogsentinel-report.service\nOnCalendar={report_sched}\nPersistent=true\n\n[Install]\nWantedBy=timers.target\n"""
     ipinfo_update_service_content = f"""[Unit]\nDescription=Service to update IP DBs for MailLogSentinel\nAfter=network.target\n\n[Service]\nType=oneshot\nUser={run_as_user}\nExecStart={python_exec} {ipinfo_script_path} --update --config {config_path}\nStandardOutput=journal\nStandardError=journal\n\n[Install]\nWantedBy=multi-user.target\n"""
     ipinfo_update_timer_content = f"""[Unit]\nDescription=Timer to update IP DBs\n\n[Timer]\nUnit=ipinfo-update.service\nOnCalendar={ip_update_sched}\nPersistent=true\n\n[Install]\nWantedBy=timers.target\n"""
+
+    # New SQL Export units
+    maillogsentinel_sql_export_service_content = f"""[Unit]\nDescription=MailLogSentinel SQL Export Service\nAfter=network.target\n\n[Service]\nType=oneshot\nUser={run_as_user}\nExecStart={python_exec} {script_path} --config {config_path} --sql-export\nWorkingDirectory={work_dir}\nStandardOutput=journal\nStandardError=journal\n\n[Install]\nWantedBy=multi-user.target\n"""
+    maillogsentinel_sql_export_timer_content = f"""[Unit]\nDescription=Run MailLogSentinel SQL Export periodically\n\n[Timer]\nUnit=maillogsentinel-sql-export.service\nOnCalendar={sql_export_schedule}\nPersistent=true\n\n[Install]\nWantedBy=timers.target\n"""
+
+    # New SQL Import units
+    maillogsentinel_sql_import_service_content = f"""[Unit]\nDescription=MailLogSentinel SQL Import Service\nAfter=network.target\n\n[Service]\nType=oneshot\nUser={run_as_user}\nExecStart={python_exec} {script_path} --config {config_path} --sql-import\nWorkingDirectory={work_dir}\nStandardOutput=journal\nStandardError=journal\n\n[Install]\nWantedBy=multi-user.target\n"""
+    maillogsentinel_sql_import_timer_content = f"""[Unit]\nDescription=Run MailLogSentinel SQL Import periodically\n\n[Timer]\nUnit=maillogsentinel-sql-import.service\nOnCalendar={sql_import_schedule}\nPersistent=true\n\n[Install]\nWantedBy=timers.target\n"""
+
     return {
         "maillogsentinel.service": maillogsentinel_service_content,
         "maillogsentinel-extract.timer": maillogsentinel_extract_timer_content,
@@ -1189,6 +1403,10 @@ def _generate_systemd_units_content(
         "maillogsentinel-report.timer": maillogsentinel_report_timer_content,
         "ipinfo-update.service": ipinfo_update_service_content,
         "ipinfo-update.timer": ipinfo_update_timer_content,
+        "maillogsentinel-sql-export.service": maillogsentinel_sql_export_service_content,
+        "maillogsentinel-sql-export.timer": maillogsentinel_sql_export_timer_content,
+        "maillogsentinel-sql-import.service": maillogsentinel_sql_import_service_content,
+        "maillogsentinel-sql-import.timer": maillogsentinel_sql_import_timer_content,
     }
 
 

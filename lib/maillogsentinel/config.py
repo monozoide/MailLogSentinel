@@ -38,6 +38,23 @@ DEFAULT_CONFIG: Dict[str, Dict[str, Any]] = {
         "size": 128,
         "ttl_seconds": 3600,
     },
+    "sqlite_database": {
+        "db_type": "sqlite3",
+        "db_path": "/var/lib/maillogsentinel/maillogsentinel.sqlite",
+        "user": "",
+        "password_hash": "",
+        "salt": "",
+    },
+    "sql_export_systemd": {
+        "frequency": "*:0/4",
+    },
+    "sql_import_systemd": {
+        "frequency": "*:0/5",
+    },
+    "sql_export_settings": {
+        "column_mapping_file": "",  # Empty string means use bundled default unless overridden by user
+        "table_name": "maillogsentinel_events",
+    },
 }
 
 
@@ -126,6 +143,30 @@ class AppConfig:
         self.dns_cache_enabled = self._get_bool("dns_cache", "enabled")
         self.dns_cache_size = self._get_int("dns_cache", "size")
         self.dns_cache_ttl_seconds = self._get_int("dns_cache", "ttl_seconds")
+
+        # [sqlite_database]
+        self.sqlite_db_type = self._get_str("sqlite_database", "db_type")
+        self.sqlite_db_path = Path(self._get_path("sqlite_database", "db_path"))
+        self.sqlite_user = self._get_str("sqlite_database", "user")
+        self.sqlite_password_hash = self._get_str("sqlite_database", "password_hash")
+        self.sqlite_salt = self._get_str("sqlite_database", "salt")
+
+        # [sql_export_systemd]
+        self.sql_export_frequency = self._get_str("sql_export_systemd", "frequency")
+
+        # [sql_import_systemd]
+        self.sql_import_frequency = self._get_str("sql_import_systemd", "frequency")
+
+        # [sql_export_settings]
+        # Assuming the path might be relative to a project root if not absolute.
+        # The setup script or deployment process needs to ensure this path is correct.
+        # For now, AppConfig will load it as a string. The consumer (sql_exporter)
+        # will need to resolve it if it's relative.
+        # A better approach: store an 'app_root' in AppConfig during main script init.
+        self.sql_column_mapping_file_path_str = self._get_str(
+            "sql_export_settings", "column_mapping_file"
+        )
+        self.sql_target_table_name = self._get_str("sql_export_settings", "table_name")
 
     def _get_default(self, section: str, option: str) -> Any:
         """

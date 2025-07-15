@@ -42,7 +42,7 @@ def _perform_actual_reverse_lookup(ip: str) -> Tuple[Optional[str], Optional[str
         error_str: Optional[str] = None
 
         if error_code is not None:
-            error_str = f"Errno {error_code}"
+            error_str = f"ERRNO {error_code}"
         elif isinstance(e, socket.timeout):
             error_str = "Timeout"
         else:

@@ -7,6 +7,7 @@ import tempfile
 import os
 import io  # For mock_log_fh spec
 import locale  # For mocking in specific test
+import re
 
 
 # Adjust the import path based on how tests are run.
@@ -962,7 +963,7 @@ class TestNonInteractiveSetupConfig(unittest.TestCase):
                 # DO NOT reset mls_setup.created_final_paths here; setUp handles initialization for each test.
                 # The list populated by the SUT call should be asserted below.
 
-            self.assertEqual(mock_write_text.call_count, 6)
+            self.assertEqual(mock_write_text.call_count, 10)
             unit_filenames = [
                 "maillogsentinel.service",
                 "maillogsentinel-extract.timer",
@@ -970,6 +971,10 @@ class TestNonInteractiveSetupConfig(unittest.TestCase):
                 "maillogsentinel-report.timer",
                 "ipinfo-update.service",
                 "ipinfo-update.timer",
+                "maillogsentinel-sql-export.service",
+                "maillogsentinel-sql-export.timer",
+                "maillogsentinel-sql-import.service",
+                "maillogsentinel-sql-import.timer",
             ]
             for unit_filename in unit_filenames:
                 # With autospec=True on Path.write_text, call.args[0] is the Path instance, call.args[1] is the content.
@@ -1397,7 +1402,71 @@ class TestNonInteractiveSetupConfig(unittest.TestCase):
             finally:
                 os.remove(config_path_str)
 
-            expected_calls = [
+            # Expected calls to systemd-analyze for calendar validation
+            # These come from the VALID_CONFIG_CONTENT and the defaults in non_interactive_setup
+            # Order matters here as they are called before systemctl daemon-reload.
+            expected_calendar_validation_calls = [
+                unittest.mock.call(
+                    [
+                        "/usr/bin/systemd-analyze",
+                        "calendar",
+                        "--iterations=1",
+                        config.get("sql_export_systemd", "frequency", fallback="*:0/4"),
+                    ],
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                ),
+                unittest.mock.call(
+                    [
+                        "/usr/bin/systemd-analyze",
+                        "calendar",
+                        "--iterations=1",
+                        config.get("sql_import_systemd", "frequency", fallback="*:0/5"),
+                    ],
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                ),
+                unittest.mock.call(
+                    [
+                        "/usr/bin/systemd-analyze",
+                        "calendar",
+                        "--iterations=1",
+                        config.get("systemd", "extraction_schedule", fallback="hourly"),
+                    ],
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                ),
+                # report_schedule default is 'daily', which is converted to '*-*-* 23:59:00' if not 'HH:MM'
+                unittest.mock.call(
+                    [
+                        "/usr/bin/systemd-analyze",
+                        "calendar",
+                        "--iterations=1",
+                        config.get(
+                            "systemd", "report_schedule", fallback="*-*-* 23:59:00"
+                        ),
+                    ],
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                ),
+                unittest.mock.call(
+                    [
+                        "/usr/bin/systemd-analyze",
+                        "calendar",
+                        "--iterations=1",
+                        config.get("systemd", "ip_update_schedule", fallback="weekly"),
+                    ],  # Updated to match VALID_CONFIG_CONTENT
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                ),
+            ]
+
+            expected_systemctl_calls = [
                 unittest.mock.call(
                     ["/usr/bin/usermod", "-aG", "adm", "testuser"],
                     check=True,
@@ -1438,7 +1507,149 @@ class TestNonInteractiveSetupConfig(unittest.TestCase):
                     capture_output=True,
                     text=True,
                 ),
+                unittest.mock.call(
+                    [
+                        "/usr/bin/systemctl",
+                        "enable",
+                        "--now",
+                        "maillogsentinel-sql-export.timer",
+                    ],
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                ),
+                unittest.mock.call(
+                    [
+                        "/usr/bin/systemctl",
+                        "enable",
+                        "--now",
+                        "maillogsentinel-sql-import.timer",
+                    ],
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                ),
             ]
+
+            # The usermod call happens before calendar validations in non_interactive_setup
+            # Then calendar validations, then systemctl daemon-reload, then systemctl enable calls.
+            # So, the order in expected_calls should be:
+            # 1. usermod
+            # 2. calendar validations (order based on non_interactive_setup logic)
+            # 3. systemctl daemon-reload
+            # 4. systemctl enable ... (order based on non_interactive_setup logic)
+
+            # Reconstructing expected_calls based on the actual flow in non_interactive_setup:
+            # 1. usermod
+            # 2. validate_calendar_expression for sql_export_schedule_str
+            # 3. validate_calendar_expression for sql_import_schedule_str
+            # 4. validate_calendar_expression for extraction_schedule_str
+            # 5. validate_calendar_expression for report_on_calendar
+            # 6. validate_calendar_expression for ip_update_schedule_str
+            # 7. systemctl daemon-reload
+            # 8. systemctl enable for timers (extract, report, ipinfo, sql-export, sql-import)
+
+            current_config = configparser.ConfigParser()
+            current_config.read_string(
+                VALID_CONFIG_CONTENT
+            )  # Read the same config used in SUT
+
+            expected_calls = [expected_systemctl_calls[0]]  # usermod
+
+            # Add calendar validation calls in the order they appear in non_interactive_setup
+            expected_calls.append(
+                unittest.mock.call(
+                    [
+                        "/usr/bin/systemd-analyze",
+                        "calendar",
+                        "--iterations=1",
+                        current_config.get(
+                            "sql_export_systemd", "frequency", fallback="*:0/4"
+                        ),
+                    ],
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                )
+            )
+            expected_calls.append(
+                unittest.mock.call(
+                    [
+                        "/usr/bin/systemd-analyze",
+                        "calendar",
+                        "--iterations=1",
+                        current_config.get(
+                            "sql_import_systemd", "frequency", fallback="*:0/5"
+                        ),
+                    ],
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                )
+            )
+            expected_calls.append(
+                unittest.mock.call(
+                    [
+                        "/usr/bin/systemd-analyze",
+                        "calendar",
+                        "--iterations=1",
+                        current_config.get(
+                            "systemd", "extraction_schedule", fallback="hourly"
+                        ),
+                    ],
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                )
+            )
+            # report_schedule logic: 'daily' -> '*-*-* 23:59:00' or 'HH:MM' -> '*-*-* HH:MM:00'
+            report_schedule_raw = current_config.get(
+                "systemd", "report_schedule", fallback="daily"
+            )
+            if report_schedule_raw.lower() == "daily":
+                report_schedule_validated = (
+                    "*-*-* 23:59:00"  # As per current logic in non_interactive_setup
+                )
+            elif re.fullmatch(r"\d{2}:\d{2}", report_schedule_raw):
+                h, m = map(int, report_schedule_raw.split(":"))
+                report_schedule_validated = f"*-*-* {h:02d}:{m:02d}:00"
+            else:
+                report_schedule_validated = (
+                    report_schedule_raw  # Assume it's a complex valid string
+                )
+
+            expected_calls.append(
+                unittest.mock.call(
+                    [
+                        "/usr/bin/systemd-analyze",
+                        "calendar",
+                        "--iterations=1",
+                        report_schedule_validated,
+                    ],
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                )
+            )
+            expected_calls.append(
+                unittest.mock.call(
+                    [
+                        "/usr/bin/systemd-analyze",
+                        "calendar",
+                        "--iterations=1",
+                        current_config.get(
+                            "systemd", "ip_update_schedule", fallback="weekly"
+                        ),
+                    ],
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                )
+            )
+
+            # Add remaining systemctl calls (daemon-reload and enables)
+            expected_calls.extend(expected_systemctl_calls[1:])
+
             # Note: The actual subprocess calls in non_interactive_setup use text=True and specific paths from shutil.which
             # We need to adjust the expected calls to match this.
             # The shutil.which mock in this test is: side_effect=lambda cmd: f"/usr/bin/{cmd}"
@@ -1674,6 +1885,148 @@ class TestNonInteractiveSetupConfig(unittest.TestCase):
                 0,
                 f"systemctl commands should not be run if systemctl is not found. Found: {systemctl_subprocess_calls}",
             )
+
+
+class TestValidateCalendarExpression(unittest.TestCase):
+    def setUp(self):
+        self.mock_log_fh = MagicMock(spec=io.StringIO)
+        self.mock_log_fh.closed = False
+        # Ensure we have a clean slate for any global lists if the function were to modify them
+        # (it doesn't, but good practice if it did)
+        mls_setup.backed_up_items = []
+        mls_setup.created_final_paths = []
+
+    @patch("bin.maillogsentinel_setup.shutil.which")
+    @patch("bin.maillogsentinel_setup.subprocess.run")
+    def test_valid_expressions(self, mock_subprocess_run, mock_shutil_which):
+        mock_shutil_which.return_value = "/usr/bin/systemd-analyze"
+        mock_subprocess_run.return_value = MagicMock(returncode=0, stderr="")
+
+        valid_expressions = [
+            "*:0/4",
+            "hourly",
+            "08:30",
+            "Mon *-*-* 10:00:00",
+            "daily",
+            "weekly",
+            "*-*-* 02:00:00",
+        ]
+        for expr in valid_expressions:
+            with self.subTest(expr=expr):
+                result = mls_setup.validate_calendar_expression(
+                    expr, self.mock_log_fh, "fallback_expr"
+                )
+                self.assertEqual(result, expr)
+                mock_subprocess_run.assert_called_with(
+                    ["/usr/bin/systemd-analyze", "calendar", "--iterations=1", expr],
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                )
+
+    @patch("bin.maillogsentinel_setup.shutil.which")
+    @patch("bin.maillogsentinel_setup.subprocess.run")
+    @patch("bin.maillogsentinel_setup._setup_print_and_log")
+    def test_invalid_expressions(
+        self, mock_print_log, mock_subprocess_run, mock_shutil_which
+    ):
+        mock_shutil_which.return_value = "/usr/bin/systemd-analyze"
+        mock_subprocess_run.return_value = MagicMock(
+            returncode=1, stderr="Invalid format"
+        )
+        fallback = "hourly"
+
+        invalid_expressions = [
+            "*/4 * * * *",  # cron
+            "every 10 minutes",  # natural language
+            "not-a-valid-expression",
+            "*:0/nonsense",
+        ]
+        for expr in invalid_expressions:
+            with self.subTest(expr=expr):
+                result = mls_setup.validate_calendar_expression(
+                    expr, self.mock_log_fh, fallback
+                )
+                self.assertEqual(result, fallback)
+                mock_print_log.assert_any_call(
+                    f"WARNING: Invalid Systemd OnCalendar expression: '{expr}'. Error: Invalid format. Falling back to default: {fallback}",
+                    self.mock_log_fh,
+                )
+
+    @patch("bin.maillogsentinel_setup.shutil.which")
+    @patch("bin.maillogsentinel_setup._setup_print_and_log")
+    def test_empty_expression(self, mock_print_log, mock_shutil_which):
+        mock_shutil_which.return_value = "/usr/bin/systemd-analyze"
+        fallback = "daily"
+        result = mls_setup.validate_calendar_expression("", self.mock_log_fh, fallback)
+        self.assertEqual(result, fallback)
+        mock_print_log.assert_any_call(
+            f"WARNING: Calendar string is empty. Falling back to default: {fallback}",
+            self.mock_log_fh,
+        )
+
+    @patch("bin.maillogsentinel_setup.shutil.which")
+    @patch("bin.maillogsentinel_setup.subprocess.run")
+    @patch("bin.maillogsentinel_setup._setup_print_and_log")
+    def test_systemd_analyze_not_found(
+        self, mock_print_log, mock_subprocess_run, mock_shutil_which
+    ):
+        mock_shutil_which.return_value = None  # Simulate not found
+        test_expr = "*:0/15"
+        fallback = "hourly"
+
+        # When systemd-analyze is not found, the function should return the original expression
+        # and log a warning.
+        result = mls_setup.validate_calendar_expression(
+            test_expr, self.mock_log_fh, fallback
+        )
+        self.assertEqual(result, fallback)  # Should now fallback
+        mock_print_log.assert_any_call(
+            f"WARNING: 'systemd-analyze' command not found. Cannot validate OnCalendar expressions. Using provided value '{test_expr}' without validation, assuming it is correct or relying on Systemd's own error handling later."
+            " This is not ideal. Falling back to default to be safe.",
+            self.mock_log_fh,
+        )
+        mock_subprocess_run.assert_not_called()
+
+    @patch("bin.maillogsentinel_setup.shutil.which")
+    @patch("bin.maillogsentinel_setup.subprocess.run")
+    @patch("bin.maillogsentinel_setup._setup_print_and_log")
+    def test_subprocess_run_filenotfound_exception(
+        self, mock_print_log, mock_subprocess_run, mock_shutil_which
+    ):
+        mock_shutil_which.return_value = "/usr/bin/systemd-analyze"  # Found by which
+        mock_subprocess_run.side_effect = FileNotFoundError("Mocked FileNotFoundError")
+        test_expr = "01:00"
+        fallback = "daily"
+
+        result = mls_setup.validate_calendar_expression(
+            test_expr, self.mock_log_fh, fallback
+        )
+        self.assertEqual(result, fallback)  # Should now fallback
+        mock_print_log.assert_any_call(
+            f"WARNING: 'systemd-analyze' command not found during execution attempt. Cannot validate OnCalendar expressions. "
+            f"Falling back to default: {fallback}",
+            self.mock_log_fh,
+        )
+
+    @patch("bin.maillogsentinel_setup.shutil.which")
+    @patch("bin.maillogsentinel_setup.subprocess.run")
+    @patch("bin.maillogsentinel_setup._setup_print_and_log")
+    def test_subprocess_run_unexpected_exception(
+        self, mock_print_log, mock_subprocess_run, mock_shutil_which
+    ):
+        mock_shutil_which.return_value = "/usr/bin/systemd-analyze"
+        mock_subprocess_run.side_effect = Exception("Mocked Unexpected Exception")
+        test_expr = "02:00"
+        fallback = "*-*-* 03:00:00"
+        result = mls_setup.validate_calendar_expression(
+            test_expr, self.mock_log_fh, fallback
+        )
+        self.assertEqual(result, fallback)
+        mock_print_log.assert_any_call(
+            f"WARNING: An unexpected error occurred while validating calendar expression '{test_expr}': Mocked Unexpected Exception. Falling back to default: {fallback}",
+            self.mock_log_fh,
+        )
 
 
 if __name__ == "__main__":

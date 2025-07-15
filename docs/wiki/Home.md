@@ -18,7 +18,7 @@ Welcome to the MailLogSentinel Wiki! This wiki provides comprehensive documentat
     *   Running MailLogSentinel
     *   Understanding the Output (Email Reports, CSV Files, Logs)
 5.  [Scripts and Utilities](Scripts-and-Utilities)
-    *   `maillogsentinel.py` (Main Script)
+    *   `maillogsentinel.py` (Main Script, including --sql-export and --sql-import)
     *   `ipinfo.py` (IP Information Utility)
     *   `log_anonymizer.py` (Log Anonymizer)
 6.  [Architecture](Architecture)
