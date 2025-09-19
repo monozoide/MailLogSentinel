@@ -9,7 +9,7 @@ A simple monitoring tool for Postfix mail servers.
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/github/actions/workflow/status/monozoide/MLS/python-app.yml?branch=main" alt="GitHub Actions Status" />
+  <img src="https://img.shields.io/github/actions/workflow/status/monozoide/MailLogSentinel/python-app.yml?branch=main" alt="GitHub Actions Status" />
   <img src="https://img.shields.io/github/languages/top/monozoide/MailLogSentinel" alt="GitHub top language" /> 
   <img src="https://img.shields.io/badge/python-3.x-brightgreen" alt="Python 3.x" /> 
   <img src="https://img.shields.io/badge/Issues-Welcome-brightgreen" alt="Issues Welcome" />
