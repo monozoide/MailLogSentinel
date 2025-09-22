@@ -23,7 +23,7 @@ A simple monitoring tool for Postfix mail servers.
 
 ## Table of Contents
 
-- [Introduction](#introduction)
+- [Overview](#overview)
 - [Quick Start](#quick-start)
 - [Architecture & Visuals](#architecture--visuals)
 - [Generated email](#generated-email)
@@ -38,20 +38,17 @@ A simple monitoring tool for Postfix mail servers.
 
 ---
 
-## Introduction
+## Overview
 
-Running your own mail server (Postfix) can feel like playing with fire: initial setup, securing, maintenance – and then daily brute-force attacks on your authentication.
-
-**MailLogSentinel** automates log analysis to detect intrusion attempts in real time. It:
-
-- Scans Postfix logs (including rotated archives)
-- Identifies failed SASL authentications
-- Extracts key details (date, server, IP, username, hostname)
-- Look up IP address information, such as country, ASN and ASO
-- Appends findings to a CSV file
-- Sends concise email summaries on schedule
+*MailLogSentinel* monitors Postfix authentication failures. When run as a systemd service, it incrementally tails the mail logs in near-real time, normalizes each event (`timestamp`, `host`, `IP`, `username`, `reverse`, `geo/ASN` when available), and appends it to a CSV file. A separate scheduled unit sends a daily email summary built from the collected entries.
 
 No complex frameworks—just Python 3 and standard libraries, plus your existing Postfix mail server.
+
+### How it works
+
+- Ingestion (systemd): a long-running service tails the Postfix log and processes new lines incrementally.
+- Storage (CSV): each parsed event is appended to a CSV with stable columns (see Wiki/Data Schema).
+- Reporting (daily): a scheduled unit composes and emails a daily summary.
 
 ---
 
