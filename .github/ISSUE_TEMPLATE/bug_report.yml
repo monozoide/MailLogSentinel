@@ -1,0 +1,14 @@
+name: Bug report
+description: Report a bug
+labels: ["bug", "help wanted"]
+body:
+  - type: textarea
+    attributes:
+      label: Description
+      description: Observed vs. expected behavior
+  - type: input
+    attributes: { label: MailLogSentinel version }
+  - type: input
+    attributes: { label: OS / Python version }
+  - type: textarea
+    attributes: { label: Logs / Steps to reproduce }
