@@ -21,6 +21,18 @@ A simple monitoring tool for Postfix mail servers.
 
 ---
 
+
+<!-- 🎃 Hacktoberfest 2025 — Badges compacts -->
+<p align="center">
+  <a href="https://hacktoberfest.com/"><img alt="Hacktoberfest 2025" src="https://img.shields.io/badge/Hacktoberfest-2025-FF8AE2?style=flat-square&logo=github"></a>
+  <a href="https://github.com/monozoide/MailLogSentinel/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22"><img alt="good first issue" src="https://img.shields.io/github/issues-search?query=repo%3Amonozoide%2FMailLogSentinel%20label%3A%22good%20first%20issue%22%20state%3Aopen&label=good%20first%20issue&style=flat-square"></a>
+  <a href="https://github.com/monozoide/MailLogSentinel/issues?q=is%3Aopen+is%3Aissue+label%3A%22help+wanted%22"><img alt="help wanted" src="https://img.shields.io/github/issues-search?query=repo%3Amonozoide%2FMailLogSentinel%20label%3A%22help%20wanted%22%20state%3Aopen&label=help%20wanted&style=flat-square"></a>
+  <img alt="Python" src="https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-3776AB?style=flat-square&logo=python&logoColor=white">
+  <a href="https://github.com/monozoide/MailLogSentinel/releases"><img alt="release" src="https://img.shields.io/github/v/release/monozoide/MailLogSentinel?display_name=tag&sort=semver&style=flat-square"></a>
+</p>
+
+---
+
 ## Table of Contents
 
 - [Overview](#overview)
