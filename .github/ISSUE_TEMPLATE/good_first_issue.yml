@@ -45,7 +45,7 @@ body:
     attributes:
       label: Skills
       multiple: true
-      options: ["Python", "Docs", "Tests", "CI", "Packaging"]
+      options: ["Python", "Docs", "Tests", "CI", "Packaging", "Linux", "Pytest", "Mail systems"]
   - type: textarea
     id: resources
     attributes:
