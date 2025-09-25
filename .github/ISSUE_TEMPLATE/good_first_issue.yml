@@ -1,0 +1,53 @@
+name: "Good First Issue"
+description: "XS/S task, self-contained, ideal for first PR"
+labels: ["good first issue", "help wanted"]
+title: "[GFI] <clear title, action verb>"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for your contribution 🙌 Please read the README & CONTRIBUTING first.
+  - type: input
+    id: context
+    attributes:
+      label: Context (where/what)
+      placeholder: "e.g.: Parsing SASL in lib/maillogsentinel/..."
+  - type: textarea
+    id: goal
+    attributes:
+      label: User goal
+      description: "Why is this useful (1–2 sentences)"
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope
+      options:
+        - label: "Size XS/S (≤4h)"
+        - label: "No breaking changes"
+        - label: "Covered by 1 test or screenshot"
+  - type: textarea
+    id: steps
+    attributes:
+      label: Suggested steps
+      description: "3–5 point roadmap"
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria (checklist)
+      value: "- [ ] …\n- [ ] …"
+  - type: input
+    id: entrypoint
+    attributes:
+      label: Code entry point
+      placeholder: "eg.: bin/maillogsentinel.py:main()"
+  - type: dropdown
+    id: skills
+    attributes:
+      label: Skills
+      multiple: true
+      options: ["Python", "Docs", "Tests", "CI", "Packaging"]
+  - type: textarea
+    id: resources
+    attributes:
+      label: Ressources
+      description: "links to README/wiki/files"
