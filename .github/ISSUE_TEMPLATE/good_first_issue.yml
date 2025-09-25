@@ -7,11 +7,11 @@ body:
     attributes:
       value: |
         Thanks for your contribution 🙌 Please read the README & CONTRIBUTING first.
-  - type: input
+  - type: textarea
     id: context
     attributes:
       label: Context (where/what)
-      placeholder: "e.g.: Parsing SASL in lib/maillogsentinel/..."
+      description: "e.g.: Parsing SASL in lib/maillogsentinel/..."
   - type: textarea
     id: goal
     attributes:
