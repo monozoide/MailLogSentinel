@@ -26,7 +26,7 @@ body:
         - label: "Size S (≤6h)"
         - label: "No breaking changes"
         - label: "Covered by 1 test or screenshot"
-        - labe: "Unit tests for realistic lines (IMAP fail, POP3 fail, unexpected line)"
+        - label: "Unit tests for realistic lines (IMAP fail, POP3 fail, unexpected line)"
         - label: "Docs updated (README + “Dovecot logs” section)"
         - label: "Respect dependency: journald support only if #19 is closed"
   - type: textarea
