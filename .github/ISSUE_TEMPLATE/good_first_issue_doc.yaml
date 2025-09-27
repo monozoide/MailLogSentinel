@@ -1,0 +1,87 @@
+name: "📚 Good First Issue - Hacktoberfest - Documentation"
+description: "Documentation improvement for beginners - Hacktoberfest friendly!"
+labels: ["good first issue", "help wanted", "documentation", "Hacktoberfest"]
+title: "[DOC] - "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 👋 Thanks for contributing to MailLogSentinel!
+        
+        ⚠️ **Code issues only** - for docs/tests, use the other templates
+        
+        **Perfect for**: first-time contributors, non-developers, improving adoption
+        
+        ⏱️ **Estimated time**: 1-3h | **No Python code required**
+
+        📖 Before you begin:
+        - [README](../README.md) | [CONTRIBUTING](../CONTRIBUTING.md) | [Wiki](../wiki)
+        - [Code de conduite](../CODE_OF_CONDUCT.md)
+
+  - type: dropdown
+    id: doc_type
+    attributes:
+      label: "🎯 Type of documentation"
+      options:
+        - "Main README"
+        - "Wiki/User guides"  
+        - "Code docstrings"
+        - "Examples/Tutorials"
+        - "FAQ/Troubleshooting"
+    validations:
+      required: true
+
+  - type: textarea
+    id: current_pain_point
+    attributes:
+      label: "🐛 Identified user problem"
+      placeholder: "New users don’t understand how to configure SMTP email because..."
+      description: "What problem will this documentation solve?"
+    validations:
+      required: true
+
+  - type: textarea
+    id: target_audience
+    attributes:
+      label: "📍 Target audience"
+      placeholder: "Beginner sysadmins with Postfix, Docker users, etc."
+      description: "Who will read this documentation?"
+    validations:
+      required: true
+
+  - type: textarea
+    id: content_outline
+    attributes:
+      label: "📋 Suggested content outline"
+      placeholder: "1. SMTP prerequisites\n2. Step-by-step configuration\n3. Functionality test\n4. Common troubleshooting"
+      description: "Suggested structure of the content"
+
+  - type: checkboxes
+    id: deliverables
+    attributes:
+      label: "📂 Expected deliverables"
+      options:
+        - label: "Text written in Markdown"
+        - label: "Screenshots/examples if applicable"  
+        - label: "Links to external resources"
+        - label: "Review by a test user"
+
+  - type: input
+    id: files_to_modify
+    attributes:
+      label: "📋 Files to modify"
+      placeholder: "README.md, docs/setup.md, etc."
+      description: "Which files will be impacted?"
+
+  - type: textarea
+    id: validation_method
+    attributes:
+      label: "✅ How to validate the result"
+      placeholder: "Have 2 people unfamiliar with the project test it"
+      description: "Measurable success criteria"
+
+  - type: markdown
+    attributes:
+      value: |
+        ---
+        🎉 **Thanks for contributing to MailLogSentinel!** Your help improves mail security for everyone.
