@@ -1,0 +1,105 @@
+name: "🐣 Good First Issue - Hacktoberfest - First Timer"
+description: "Perfect for your very first open source contribution! - Hacktoberfest friendly!"
+labels: ["good first issue", "help wanted", "Hacktoberfest"]
+title: "[FIRST-TIMER] - "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        # 🎉 Welcome to open source!
+
+        ## 👋 Thanks for contributing to MailLogSentinel!
+        
+        ⚠️ **First Timer only** - for code/docs/tests, use the other templates 
+
+        This issue is **specifically designed** for someone who has never made a Pull Request.
+        
+        **⏱️ Estimated time**: 30min-2h  
+        **🛠️ Skills**: Just knowing how to copy/paste and follow instructions!
+        
+        **📞 Need help?** Comment on this issue, we’ll reply within <24h!
+
+  - type: checkboxes
+    id: beginner_checks
+    attributes:
+      label: "Are you in the right category?"
+      options:
+        - label: "This is my first open source contribution"
+        - label: "I have never made a GitHub Pull Request"
+        - label: "I have read the guide [First Contributions](https://github.com/firstcontributions/first-contributions/blob/main/translations/README.fr.md)"
+
+  - type: dropdown
+    id: task_type
+    attributes:
+      label: "Task type (pre-selected)"
+      options:
+        - "Fix a typo"
+        - "Improve an example"
+        - "Translate text"
+        - "Add a missing link"
+        - "Reformat text"
+    validations:
+      required: true
+
+  - type: textarea
+    id: step_by_step
+    attributes:
+      label: "Detailed instructions (maintainer)"
+      value: |
+        ## 🔧 Exact steps to follow:
+        
+        1. [ ] **Fork this repo** (click the "Fork" button at the top right)
+        2. [ ] **Clone your fork**: `git clone https://github.com/YOUR-USERNAME/MailLogSentinel.git`
+        3. [ ] **Create a branch**: `git checkout -b fix-typo-readme`
+        4. [ ] **Edit the file**: [EXACT_FILE]
+        5. [ ] **Line to change**: [LINE_NUMBER] 
+        6. [ ] **Replace** `[OLD_TEXT]` with `[NEW_TEXT]`
+        7. [ ] **Save and commit**: `git add . && git commit -m "Fix typo in README"`
+        8. [ ] **Push**: `git push origin fix-typo-readme`  
+        9. [ ] **Create Pull Request** on GitHub
+        10. [ ] **Wait for review** (we check within 24h!)
+        
+        ❓ **Stuck somewhere?** Comment on this issue with the step number!
+    validations:
+      required: true
+
+  - type: input
+    id: exact_file
+    attributes:
+      label: "Exact file to modify"
+      placeholder: "README.md"
+    validations:
+      required: true
+
+  - type: input  
+    id: line_number
+    attributes:
+      label: "Line number"
+      placeholder: "42"
+
+  - type: textarea
+    id: before_after
+    attributes:
+      label: "Before/After"
+      placeholder: "BEFORE: `mail server montoring`\nAFTER: `mail server monitoring`"
+    validations:
+      required: true
+
+  - type: markdown
+    attributes:
+      value: |
+        ---
+        
+        ## 🏆 After your first PR:
+        
+        - You will have contributed to open source! 🎉  
+        - You can look for other `good first issue` tickets
+        - Join our [Discord](#) to chat
+        
+        **Thanks for being part of the community! 💙**
+        
+  - type: markdown
+    attributes:
+      value: |
+        ---
+        🎉 **Thanks for contributing to MailLogSentinel!** Your help improves mail security for everyone.
