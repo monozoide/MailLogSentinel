@@ -1,0 +1,215 @@
+name: "🐍 Good First Issue - Hacktoberfest - Code Python"
+description: "XS/S Python development task for beginners - Hacktoberfest friendly!"
+labels: ["good first issue", "Hacktoberfest", "help wanted"]
+title: "[CODE] - <action verb>, <component>"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 👋 Thanks for contributing to MailLogSentinel!
+        
+        ⚠️ **Code issues only** - for docs/tests, use the other templates 
+        
+        📖 Before you begin:
+        - [README](../README.md) | [CONTRIBUTING](../CONTRIBUTING.md) | [Wiki](../wiki)
+        - [Code de conduite](../CODE_OF_CONDUCT.md)
+
+  - type: checkboxes
+    id: prerequisites
+    attributes:
+      label: Confirmed prerequisites
+      options:
+        - label: "I have Python 3.8+ installed locally"
+          required: true
+        - label: "I can run the tests (`python -m pytest tests/`)"
+          required: true
+        - label: "I have read the CONTRIBUTING.md"
+          required: true
+        
+  - type: dropdown
+    id: difficulty
+    attributes:
+      label: 🎯 Difficulty level
+      description: "Estimate based on technical prerequisites"
+      options:
+        - "🟢 Beginner (basic Python knowledge)"
+        - "🟡 Intermediate (Python + standard libs)"
+        - "🔵 Intermediate+ (Python + systemd/Postfix)"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: skills
+    attributes:
+      label: 🛠️ Main skills required
+      multiple: true
+      options:
+        - "Python (basic)"
+        - "Python (advanced)"
+        - "Regex"
+        - "Tests (pytest)"
+        - "Documentation"
+        - "CI/CD"
+        - "Systemd"
+        - "Postfix/Mail"
+        - "SQL"
+        - "Packaging"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: difficulty_estimate
+    attributes:
+      label: "Difficulty estimate (maintainer)"
+      options:
+        - "XS (≤2h, 1 file)"
+        - "S (2-4h, 2-3 files)"
+      
+  - type: input
+    id: component
+    attributes:
+      label: 📍 Concerned component
+      description: "Main module/file impacted"
+      placeholder: "ex: lib/maillogsentinel/parser.py"
+    validations:
+      required: true
+      
+  - type: textarea
+    id: problem
+    attributes:
+      label: 🐛 Problem/Improvement
+      description: "Context and current situation"
+      placeholder: |
+        Currently, the SASL parser does not handle cases where...
+        This causes an issue when...
+    validations:
+      required: true
+      
+  - type: textarea
+    id: solution
+    attributes:
+      label: 💡 Proposed solution
+      description: "How to solve the problem"
+      placeholder: |
+        Add a validation that...
+        Modify the regex to capture...
+    validations:
+      required: true
+      
+  - type: textarea
+    id: learning
+    attributes:
+      label: 🎓 What you will learn
+      description: "Skills you will develop"
+      value: |
+        - [ ] Postfix log parsing
+        - [ ] Python regular expressions
+        - [ ] Unit testing with pytest
+        - [ ] Git/GitHub workflow
+      
+  - type: textarea
+    id: steps
+    attributes:
+      label: 📋 Suggested steps
+      description: "Step-by-step guide (editable according to your approach)"
+      value: |
+        1. **Setup** 🔧
+           - Fork the repo and clone locally
+           - Install the dev environment: `pip install -r requirements-dev.txt`
+           - Run existing tests: `pytest tests/`
+        
+        2. **Development** 💻
+           - Locate the code in `<to be completed>`
+           - Implement the solution
+           - Add/modify tests in `tests/`
+        
+        3. **Validation** ✅
+           - Ensure all tests pass
+           - Manually test with `bin/maillogsentinel.py --test`
+           - Check linting: `flake8 lib/`
+        
+        4. **Documentation** 📝
+           - Update docstrings
+           - Add an entry in CHANGELOG.md if relevant
+           
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: ✔️ Acceptance criteria
+      description: "Checklist for a complete PR"
+      value: |
+        - [ ] Code works for the nominal case
+        - [ ] Error cases are handled gracefully
+        - [ ] Tests added/modified (coverage maintained)
+        - [ ] No regression on existing tests
+        - [ ] Code commented and docstrings updated
+        - [ ] Clear commit messages (conventional commits)
+        - [ ] PR linked to this issue (#number)
+
+  - type: input
+    id: entry_point
+    attributes:
+      label: "Recommended entry point"
+      placeholder: "lib/maillogsentinel/parser.py:parse_sasl_line()"
+      description: "Function/class to start from"
+
+  - type: textarea
+    id: test_scenario
+    attributes:
+      label: "Test scenario"
+      placeholder: "1. Create fake log with edge case\n2. Run parser\n3. Check CSV output"
+      description: "How to manually test the feature"
+      
+  - type: textarea
+    id: examples
+    attributes:
+      label: 📚 Resources & Examples
+      description: "Useful links and similar PRs"
+      value: |
+        **Documentation:**
+        - [Parser architecture](../wiki/Architecture#parser)
+        - [Testing guide](../wiki/Testing)
+        
+        **Similar PRs for reference:**
+        - #XX - Added parser for TLS auth
+        - #YY - Improved SASL regex
+        
+        **Test files:**
+        - `tests/fixtures/mail.log.sample` - Sample logs
+        - `tests/test_parser.py` - Existing tests
+        
+  - type: checkboxes
+    id: scope_check
+    attributes:
+      label: 🎯 Scope confirmation
+      description: "Check that this issue meets the GFI criteria"
+      options:
+        - label: "Size XS/S (≤4 hours of work)"
+          required: true
+        - label: "No breaking change on the existing API"
+          required: true
+        - label: "Can be unit tested"
+          required: true
+        - label: "Clear documentation provided"
+          required: true
+          
+  - type: textarea
+    id: help
+    attributes:
+      label: 💬 Need help?
+      value: |
+        - **Quick questions:** Comment directly on this issue
+        - **Technical discussion:** [Open a discussion](../discussions/new)
+        - **Real-time chat:** [Project Discord](https://discord.gg/xxxxx) (if applicable)
+        - **Mentor available:** @monozoide can guide you
+        
+        🏷️ **Hacktoberfest tags:** This PR counts for Hacktoberfest if:
+        - Submitted in October
+        - Repo has the `hacktoberfest` topic
+        - PR accepted or labeled `hacktoberfest-accepted`
+        
+  - type: markdown
+    attributes:
+      value: |
+        ---
+        🎉 **Thanks for contributing to MailLogSentinel!** Your help improves mail security for everyone.
