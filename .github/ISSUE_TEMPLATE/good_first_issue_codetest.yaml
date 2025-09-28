@@ -65,7 +65,7 @@ body:
         - "XS (≤2h, 1 file)"
         - "S (2-4h, 2-3 files)"
       
-  - type: input
+  - type: textarea
     id: component
     attributes:
       label: 📍 Concerned component
@@ -146,10 +146,10 @@ body:
         - [ ] Clear commit messages (conventional commits)
         - [ ] PR linked to this issue (#number)
 
-  - type: input
+  - type: textarea
     id: entry_point
     attributes:
-      label: "Recommended entry point"
+      label: "➡️ Recommended entry point"
       placeholder: "lib/maillogsentinel/parser.py:parse_sasl_line()"
       description: "Function/class to start from"
 
@@ -185,13 +185,13 @@ body:
       description: "Check that this issue meets the GFI criteria"
       options:
         - label: "Size XS/S (≤4 hours of work)"
-          required: true
+          required: false
         - label: "No breaking change on the existing API"
-          required: true
+          required: false
         - label: "Can be unit tested"
-          required: true
+          required: false
         - label: "Clear documentation provided"
-          required: true
+          required: false
           
   - type: textarea
     id: help
