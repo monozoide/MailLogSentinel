@@ -15,8 +15,8 @@ body:
         ⏱️ **Estimated time**: 1-3h | **No Python code required**
 
         📖 Before you begin:
-        - [README](../README.md) | [CONTRIBUTING](../CONTRIBUTING.md) | [Wiki](../wiki)
-        - [Code de conduite](../CODE_OF_CONDUCT.md)
+        - [README](../blob/main/README.md) | [CONTRIBUTING](../blob/main/CONTRIBUTING.md) | [Wiki](../wiki)
+        - [Code de conduite](../blob/main/CODE_OF_CONDUCT.md)
 
   - type: dropdown
     id: doc_type
