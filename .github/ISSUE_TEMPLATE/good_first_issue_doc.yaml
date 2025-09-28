@@ -66,7 +66,7 @@ body:
         - label: "Links to external resources"
         - label: "Review by a test user"
 
-  - type: input
+  - type: textarea
     id: files_to_modify
     attributes:
       label: "📋 Files to modify"
