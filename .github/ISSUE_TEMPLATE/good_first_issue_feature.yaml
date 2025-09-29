@@ -1,0 +1,283 @@
+name: "✨ Good First Issue - Hacktoberfest - Feature Request"
+description: "Propose a new feature or major improvement"
+labels: ["enhancement", "Hacktoberfest"]
+title: "[FEATURE] - <descriptive title>"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## ✨ Feature Request
+        
+        Thank you for proposing an improvement for MailLogSentinel! The best features solve real problems for mail administrators.
+        
+        💡 **Before submitting:** Check [existing issues](../issues) and the [roadmap](../blob/main/docs/Roadmap.md)
+        
+  - type: dropdown
+    id: feature_type
+    attributes:
+      label: 🎯 Feature type
+      description: "Main category of your proposal"
+      options:
+        - "🔍 Detection/Parsing (new log patterns)"
+        - "📊 Reporting/Visualization (dashboards, charts)"
+        - "🔔 Alerting/Notifications (webhooks, escalation)"
+        - "🗄️ Storage/Export (new formats, databases)"
+        - "🛡️ Security (IP blocking, rate limiting)"
+        - "⚙️ Configuration/Administration"
+        - "🔌 Integrations (SIEM, monitoring tools)"
+        - "🚀 Performance/Scalability"
+        - "📱 Interface/API"
+        - "🔧 Other"
+    validations:
+      required: true
+      
+  - type: textarea
+    id: problem_statement
+    attributes:
+      label: 🎯 Problem to solve
+      description: "What problem does this feature solve?"
+      placeholder: |
+        As a system administrator, I encounter the following problem:
+        
+        Currently, MailLogSentinel sends a daily report, but during an active attack,
+        I’d like to be alerted immediately when a threshold is exceeded (e.g., 10 attempts/minute
+        from the same IP).
+        
+        This would allow me to react quickly and block the attacker.
+    validations:
+      required: true
+      
+  - type: textarea
+    id: proposed_solution
+    attributes:
+      label: 💡 Proposed solution
+      description: "How do you envision this feature?"
+      placeholder: |
+        **Feature:** Real-time alerting system
+        
+        **Description:**
+        - Define alert rules in the config (thresholds, patterns)
+        - Real-time event monitoring
+        - Notifications via email/webhook/telegram when threshold reached
+        - Cooldown to avoid alert spam
+        
+        **User interface:**
+        ```yaml
+        # maillogsentinel.conf
+        [alerts]
+        enabled = true
+        rules = 
+          - name: "Brute force attack"
+            condition: "same_ip_attempts > 10 in 5min"
+            action: "email,webhook"
+            cooldown: "30min"
+        ```
+    validations:
+      required: true
+      
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 🔄 Considered alternatives
+      description: "Other solutions considered and why this one is better"
+      placeholder: |
+        1. **Fail2ban:** Too generic, not specific to SASL patterns
+        2. **Custom cron script:** Not real-time, hard to maintain
+        3. **Commercial solution:** Expensive, overkill for a small server
+        
+        MailLogSentinel with this feature would be ideal as it’s already integrated
+        in my workflow and Postfix-specific.
+      
+  - type: textarea
+    id: use_cases
+    attributes:
+      label: 📝 Use cases
+      description: "Concrete examples of usage"
+      value: |
+        **Case 1: Small business**
+        - 
+        
+        **Case 2: Personal server**
+        - 
+        
+        **Case 3: Multi-server**
+        - 
+        
+  - type: dropdown
+    id: priority
+    attributes:
+      label: ⚡ Suggested priority
+      description: "In your opinion, how urgent is this?"
+      options:
+        - "🔴 Critical - Production blocking"
+        - "🟠 High - Major improvement"
+        - "🟡 Medium - Nice to have"
+        - "🟢 Low - Distant future"
+      default: 2
+      
+  - type: dropdown
+    id: breaking_change
+    attributes:
+      label: 💥 Breaking change?
+      description: "Would this feature break existing functionality?"
+      options:
+        - "✅ No - Backward compatible"
+        - "⚠️ Maybe - Depends on implementation"
+        - "❌ Yes - Major changes required"
+      default: 0
+    validations:
+      required: true
+      
+  - type: textarea
+    id: implementation_ideas
+    attributes:
+      label: 🏗️ Implementation ideas
+      description: "If you have technical suggestions (optional)"
+      render: python
+      placeholder: |
+        ```python
+        # Example possible structure
+        class AlertManager:
+            def __init__(self, config):
+                self.rules = self.load_rules(config)
+                self.cooldowns = {}
+            
+            def check_alert_conditions(self, event):
+                for rule in self.rules:
+                    if rule.matches(event) and not self.in_cooldown(rule):
+                        self.trigger_alert(rule, event)
+        ```
+        
+        Could use:
+        - asyncio for real-time monitoring
+        - Redis for multi-instance shared state
+        - Jinja2 for alert templates
+      
+  - type: textarea
+    id: impact_analysis
+    attributes:
+      label: 📊 Impact analysis
+      description: "Impact on the project and users"
+      value: |
+        **Positive impact:**
+        - 👥 Impacted users: 
+        - 📈 Added value: 
+        - 🎯 Use case unlocked: 
+        
+        **Potential negative impact:**
+        - 🔧 Added complexity: 
+        - 📦 New dependencies: 
+        - 🐛 Regression risks: 
+        - 📚 Documentation needed: 
+      
+  - type: checkboxes
+    id: effort_estimate
+    attributes:
+      label: 💪 Effort estimate
+      description: "Check what will be needed"
+      options:
+        - label: "New Python module"
+        - label: "Modification of existing parser"
+        - label: "New configuration"
+        - label: "New unit tests"
+        - label: "Integration tests"
+        - label: "User documentation"
+        - label: "Developer documentation"
+        - label: "Usage examples"
+        - label: "Migration for existing users"
+        
+  - type: input
+    id: time_estimate
+    attributes:
+      label: ⏱️ Estimated development time
+      description: "Your estimate (if you plan to contribute)"
+      placeholder: "Ex: 20-30 hours, 2-3 weeks"
+      
+  - type: dropdown
+    id: contribution
+    attributes:
+      label: 🤝 Contribution
+      description: "Are you willing to implement this feature?"
+      options:
+        - "✅ Yes, I want to implement it"
+        - "🤔 Maybe, with help"
+        - "❌ No, just a suggestion"
+        - "💰 Willing to sponsor development"
+      default: 2
+      
+  - type: textarea
+    id: mockups
+    attributes:
+      label: 🎨 Mockups/Visual examples
+      description: "Screenshots, diagrams, or sample output (optional)"
+      placeholder: |
+        You can paste:
+        - Screenshots of similar tools
+        - ASCII/Mermaid diagrams
+        - Config examples
+        - Console/email output examples
+        
+        ```
+        [ALERT] Brute Force Detected - mail.example.com
+        ================================================
+        Timestamp: 2025-01-15 14:23:45
+        Source IP: 192.168.1.100
+        Attempts: 15 in last 5 minutes
+        Usernames tried: admin, root, test, user
+        Geo: CN - China Telecom
+        Action taken: IP blocked for 1 hour
+        ================================================
+        ```
+        
+  - type: textarea
+    id: references
+    attributes:
+      label: 📚 References
+      description: "Links to similar implementations, articles, RFCs..."
+      placeholder: |
+        - [Fail2ban jail for Postfix](https://example.com)
+        - [Intrusion detection article](https://example.com)
+        - [RFC XYZ on syslog alerts](https://example.com)
+        - Similar project: https://github.com/...
+        
+  - type: textarea
+    id: additional_context
+    attributes:
+      label: 📋 Additional context
+      description: "Any other useful information"
+      placeholder: |
+        - Size of my infrastructure
+        - Volume of logs processed
+        - Specific constraints
+        - Desired timeline
+        
+  - type: checkboxes
+    id: feature_checklist
+    attributes:
+      label: ✅ Validation checklist
+      description: "Before submitting"
+      options:
+        - label: "I have verified this feature doesn’t already exist"
+          required: true
+        - label: "I have searched similar issues"
+          required: true
+        - label: "I have read the project roadmap"
+        - label: "This feature aligns with project goals"
+        - label: "I have provided enough details to evaluate the proposal"
+          required: true
+          
+  - type: markdown
+    attributes:
+      value: |
+        ---
+        ## 💬 Discussion process
+        
+        1. **Initial discussion** - The community discusses relevance
+        2. **Validation** - @monozoide validates or requests clarification
+        3. **Design** - Refinement of the technical solution
+        4. **Implementation** - PR(s) to implement the feature
+        5. **Documentation** - Update wiki/docs
+        
+        ⚡ **Hacktoberfest features:** Major features can be split into multiple PRs!
+        
+        📊 **Vote:** Use 👍/👎 on this issue to show your interest!
