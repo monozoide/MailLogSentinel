@@ -121,6 +121,8 @@ MailLogSentinel supports several command-line arguments for various operations:
 
 For more details on these options, refer to the man page (`man maillogsentinel`) or use `maillogsentinel.py --help`.
 
+[Install on Debian 12/13](docs/install_debian13.md)
+
 ## Progress Display
 
 *   **Setup:**
