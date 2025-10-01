@@ -370,6 +370,13 @@ This project is licensed under the GNU GPL v3. See [LICENSE](LICENSE) for detail
 > Thank you for your trust and support! :sparkling_heart: 
 
 > [!IMPORTANT]
+
+## Quick links
+
+- [FAQ & Troubleshooting](docs/wiki/FAQ%20&%20Troubleshooting.md)
+- [Getting Started](docs/wiki/Getting-Started.md)
+- [Configuration](docs/wiki/Configuration.md)
+- [Full documentation (Wiki Home)](docs/wiki/Home.md)
 > I chose [Liberapay](https://liberapay.com/) for several reasons:
 >
 > - Non-profit association based in France :clap:

@@ -2,6 +2,8 @@
 
 MailLogSentinel is configured via a central file, typically named `maillogsentinel.conf`. This file uses a simple INI-style format, divided into sections.
 
+> **See also:** [FAQ & Troubleshooting](./FAQ%20&%20Troubleshooting.md)
+
 ## Configuration File (`maillogsentinel.conf`)
 
 The default location for the main configuration file is usually established during the setup process (e.g., `/etc/maillogsentinel/maillogsentinel.conf` or a user-specific path). If the file is not found at the expected path, MailLogSentinel will fall back to default values for its operation.
