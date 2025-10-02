@@ -22,6 +22,7 @@ A simple monitoring tool for Postfix mail servers.
 ---
 
 
+
 <!-- 🎃 Hacktoberfest 2025 — Badges compacts -->
 <p align="center">
   <a href="https://hacktoberfest.com/"><img alt="Hacktoberfest 2025" src="https://img.shields.io/badge/Hacktoberfest-2025-FF8AE2?style=flat-square&logo=github"></a>
@@ -370,6 +371,13 @@ This project is licensed under the GNU GPL v3. See [LICENSE](LICENSE) for detail
 > Thank you for your trust and support! :sparkling_heart: 
 
 > [!IMPORTANT]
+
+## Quick links
+
+- [FAQ & Troubleshooting](docs/wiki/FAQ%20&%20Troubleshooting.md)
+- [Getting Started](docs/wiki/Getting-Started.md)
+- [Configuration](docs/wiki/Configuration.md)
+- [Full documentation (Wiki Home)](docs/wiki/Home.md)
 > I chose [Liberapay](https://liberapay.com/) for several reasons:
 >
 > - Non-profit association based in France :clap:
