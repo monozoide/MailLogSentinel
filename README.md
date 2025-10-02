@@ -22,6 +22,7 @@ A simple monitoring tool for Postfix mail servers.
 ---
 
 
+
 <!-- 🎃 Hacktoberfest 2025 — Badges compacts -->
 <p align="center">
   <a href="https://hacktoberfest.com/"><img alt="Hacktoberfest 2025" src="https://img.shields.io/badge/Hacktoberfest-2025-FF8AE2?style=flat-square&logo=github"></a>
