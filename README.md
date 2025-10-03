@@ -64,6 +64,7 @@ No complex frameworks—just Python 3 and standard libraries, plus your existing
 
 ---
 
+
 ## Quick Start
 
 1. **Clone the repository**
@@ -106,6 +107,12 @@ MailLogSentinel offers two primary setup modes:
 
 > [!WARNING]
 > Read the [Wiki](https://github.com/monozoide/MailLogSentinel/wiki) for detailed information on configuration options and prerequisites before the first run.
+
+## 🚀 Quick Start for Debian 13 Installation
+
+For a complete step-by-step guide on Debian 12 (Bookworm) or Debian 13 (Trixie):
+
+**📖 [Installation Guide for Debian 12/13](docs/install_debian13.md)**
 
 ### Other Command-Line Options
 
