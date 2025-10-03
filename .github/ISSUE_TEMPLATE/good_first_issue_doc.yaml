@@ -8,15 +8,17 @@ body:
       value: |
         ## 👋 Thanks for contributing to MailLogSentinel!
         
-        ⚠️ **Code issues only** - for docs/tests, use the other templates
+        ⚠️ **Docs issues only** - for codes/tests, use the other templates
         
         **Perfect for**: first-time contributors, non-developers, improving adoption
         
         ⏱️ **Estimated time**: 1-3h | **No Python code required**
 
         📖 Before you begin:
-        - [README](../blob/main/README.md) | [CONTRIBUTING](../blob/main/docs/CONTRIBUTING.md) | [Wiki](../wiki)
-        - [Code de conduite](../blob/main/CODE_OF_CONDUCT.md)
+        - [ ] [README](../blob/main/README.md) (optional)
+        - [ ] [CONTRIBUTING](../blob/main/docs/CONTRIBUTING.md) (mandatory)
+        - [ ] [Wiki](../wiki) (optional)
+        - [ ] [Code of conduct](../blob/main/CODE_OF_CONDUCT.md) (mandatory)
 
   - type: dropdown
     id: doc_type
@@ -28,6 +30,8 @@ body:
         - "Code docstrings"
         - "Examples/Tutorials"
         - "FAQ/Troubleshooting"
+        - "Templates"
+        - "Others"
     validations:
       required: true
 
@@ -70,7 +74,9 @@ body:
     id: files_to_modify
     attributes:
       label: "📋 Files to modify"
-      placeholder: "README.md, docs/setup.md, etc."
+      placeholder: "- [ ] README.md
+- [ ] docs/setup.md
+- [ ] etc."
       description: "Which files will be impacted?"
 
   - type: textarea
