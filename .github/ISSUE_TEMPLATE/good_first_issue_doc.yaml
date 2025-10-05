@@ -14,11 +14,17 @@ body:
         
         ⏱️ **Estimated time**: 1-3h | **No Python code required**
 
-        📖 Before you begin:
-        - [ ] [README](../blob/main/README.md) (optional)
-        - [ ] [CONTRIBUTING](../blob/main/docs/CONTRIBUTING.md) (mandatory)
-        - [ ] [Wiki](../wiki) (optional)
-        - [ ] [Code of conduct](../blob/main/CODE_OF_CONDUCT.md) (mandatory)
+  - type: checkboxes
+    id: prerequisites
+    attributes:
+      label: "📖 Before you begin"
+      options:
+        - label: "README"
+        - label: "CONTRIBUTING"
+          required: true
+        - label: "Wiki"
+        - label: "Code of conduct"
+          required: true
 
   - type: dropdown
     id: doc_type
@@ -31,6 +37,7 @@ body:
         - "Examples/Tutorials"
         - "FAQ/Troubleshooting"
         - "Templates"
+        - "Workflows"
         - "Others"
     validations:
       required: true
@@ -74,9 +81,7 @@ body:
     id: files_to_modify
     attributes:
       label: "📋 Files to modify"
-      placeholder: "- [ ] README.md
-- [ ] docs/setup.md
-- [ ] etc."
+      placeholder: "README.md\ndocs/setup.md\netc."
       description: "Which files will be impacted?"
 
   - type: textarea
