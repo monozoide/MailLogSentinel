@@ -422,7 +422,14 @@ All contributions are welcome—code, docs, ideas, bug reports!
 ```
 
 ## Roadmap
-You can consult the [Roadmap.md](docs/Roadmap.md)  file for more information
+You can consult the [Roadmap.md](docs/Roadmap.md) file for more information
+
+## Test-User Validation Checklist
+
+- I followed “Quick Start (5 minutes)” without prior knowledge
+- I received an email report on the first run
+- I can see CSV entries at `/var/log/maillogsentinel/maillogsentinel.csv`
+- I can find more details via the wiki links listed above
 
 ## License
 This project is licensed under the GNU GPL v3. See [LICENSE](LICENSE) for details.
