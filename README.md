@@ -22,6 +22,56 @@ A simple monitoring tool for Postfix mail servers.
 ---
 
 
+## Who Is This For
+
+- Users who want a quick, working setup with minimal steps
+- Sysadmins deploying on servers and automating via systemd
+- Testers validating functionality and reporting issues
+
+## Quick Start (5 minutes)
+
+Use this minimal, no-systemd path first. You can enable services later.
+
+Prerequisites
+- Linux with Postfix logs (e.g., `/var/log/mail.log`)
+- Python 3.10+ and `sudo`
+
+1) Get the code
+```bash
+git clone https://github.com/monozoide/MailLogSentinel.git
+cd MailLogSentinel
+```
+
+2) Interactive setup (creates config and folders)
+```bash
+sudo PYTHONPATH=$(pwd) bin/maillogsentinel.py --setup --interactive
+```
+
+3) Update IP databases (ASN/country)
+```bash
+sudo PYTHONPATH=$(pwd) bin/ipinfo.py --update --config /etc/maillogsentinel.conf
+```
+
+4) Process logs once and send a report
+```bash
+sudo PYTHONPATH=$(pwd) bin/maillogsentinel.py --config /etc/maillogsentinel.conf
+sudo PYTHONPATH=$(pwd) bin/maillogsentinel.py --config /etc/maillogsentinel.conf --report
+```
+
+5) Verify
+- CSV: `/var/log/maillogsentinel/maillogsentinel.csv`
+- App log: `/var/log/maillogsentinel/maillogsentinel.log`
+- Email report delivered to the configured address
+
+When ready, see the links below to install services (systemd).
+
+## Links To Full Documentation
+- Getting started and production install: docs/wiki/Getting-Started.md
+- Configuration reference: docs/wiki/Configuration.md
+- Usage and options: docs/wiki/Usage.md
+- Troubleshooting: docs/wiki/Troubleshooting.md
+
+---
 <!-- 🎃 Hacktoberfest 2025 — Badges compacts -->
 <p align="center">
   <a href="https://hacktoberfest.com/"><img alt="Hacktoberfest 2025" src="https://img.shields.io/badge/Hacktoberfest-2025-FF8AE2?style=flat-square&logo=github"></a>
@@ -35,6 +85,9 @@ A simple monitoring tool for Postfix mail servers.
 
 ## Table of Contents
 
+- [Who Is This For](#who-is-this-for)
+- [Quick Start (5 minutes)](#quick-start-5-minutes)
+- [Links To Full Documentation](#links-to-full-documentation)
 - [Overview](#overview)
 - [Quick Start](#quick-start)
 - [Architecture & Visuals](#architecture--visuals)
@@ -45,6 +98,7 @@ A simple monitoring tool for Postfix mail servers.
 - [Full documentation](#full-documentation)
 - [Contributing](#contributing)
 - [Roadmap](#roadmap)
+- [Test-User Validation Checklist](#test-user-validation-checklist)
 - [License](#license)
 - [Support](#support)
 
@@ -141,7 +195,11 @@ graph LR
 ```
 
 ## Generated email
-The email report provides a summary of failed login attempts. Here's an example:
+The email report provides a summary of failed login attempts.
+
+<details>
+<summary>Show example email</summary>
+
 ```
 ##################################################
 ### MailLogSentinel v1.0.5-A                     ###
@@ -224,6 +282,8 @@ Please see attached: maillogsentinel.csv
 For more details and documentation, visit: https://github.com/monozoide/MailLogSentinel/blob/main/README.md
 ```
 
+</details>
+
 ## Generated CSV Structure
 `reports/intrusions.csv` columns:
 |server|date|ip|user|hostname|reverse_dns_status|country_code|asn|aso|
@@ -235,6 +295,10 @@ For more details and documentation, visit: https://github.com/monozoide/MailLogS
 Each new intrusion record is appended automatically.
 
 ## Generated logs
+
+<details>
+<summary>Show example logs</summary>
+
 ```
 2025-05-29 00:00:00,315 INFO === Start of MailLogSentinel v1.0.4-B ===
 2025-05-28 23:50:04,990 DEBUG Read CSV line: Server='srv', Date='01/05/2025 02:28', IP='188.255.34.171', User='admin@libranet.fr', Hostname='broadband-188-255-34-171.ip.moscow.rt.ru', DNS Status='OK'. Comparing Date with '28/05/2025'.
@@ -251,6 +315,8 @@ Each new intrusion record is appended automatically.
 2025-05-28 23:50:05,205 INFO Report sent from admin@my_server.fqdn to admin@my_server.fqdn
 2025-05-29 00:00:01,938 INFO === End of MailLogSentinel execution ===
 ```
+
+</details>
 
 ## Additional features
 
@@ -379,4 +445,3 @@ This project is licensed under the GNU GPL v3. See [LICENSE](LICENSE) for detail
 > - Opportunity for everyone to contribute to the life of the association and/or the platform :construction_worker:
 > 
 > <noscript><a href="https://liberapay.com/Zoide/donate"><img alt="Donate using Liberapay" src="https://liberapay.com/assets/widgets/donate.svg"></a></noscript>
-
