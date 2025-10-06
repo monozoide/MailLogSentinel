@@ -62,6 +62,16 @@ No complex frameworks—just Python 3 and standard libraries, plus your existing
 - Storage (CSV): each parsed event is appended to a CSV with stable columns (see Wiki/Data Schema).
 - Reporting (daily): a scheduled unit composes and emails a daily summary.
 
+### Log Source Support
+
+MailLogSentinel automatically detects and supports multiple log sources:
+
+- **systemd journald** (preferred): Reads directly from journalctl when available
+- **Traditional syslog files** (fallback): Supports log rotation, gzip compression
+- **Automatic detection**: Chooses the best available source, or configure manually
+
+See [Journald Support Documentation](docs/wiki/Journald-Support.md) for detailed configuration options.
+
 ---
 
 ## Quick Start

@@ -52,7 +52,8 @@ from lib.maillogsentinel.utils import (
 from lib.maillogsentinel.config import (
     AppConfig,
 )
-from lib.maillogsentinel.parser import extract_entries
+from lib.maillogsentinel.parser import extract_entries, extract_entries_with_reader
+from lib.maillogsentinel.log_reader import detect_log_source, create_log_reader
 from lib.maillogsentinel.dns_utils import initialize_dns_cache, reverse_lookup
 from lib.maillogsentinel.report import send_report
 from lib.maillogsentinel.sql_exporter import run_sql_export
@@ -635,27 +636,97 @@ def main():
         )  # Translated # Updated call
         sys.exit(1)
 
+    # --- Determine log source and create appropriate reader ---
+    progress_tracker.start_step(
+        "Determining log source"
+    )  # Translated # Updated call
+    
+    # Get log source preference from config
+    configured_source_type = app_config.log_source_type
+    journald_unit = app_config.journald_unit
+    
+    if configured_source_type == "auto":
+        # Autodetect the best log source
+        detected_source = detect_log_source(logger, journald_unit)
+        logger.info(f"Auto-detected log source: {detected_source}")
+        source_type = detected_source
+    elif configured_source_type in ["syslog", "journald"]:
+        # Use explicitly configured source
+        source_type = configured_source_type
+        logger.info(f"Using configured log source: {source_type}")
+    else:
+        # Invalid configuration, fall back to syslog
+        logger.warning(f"Invalid log source configuration '{configured_source_type}', falling back to syslog")
+        source_type = "syslog"
+    
+    progress_tracker.complete_step(
+        "Determining log source", True, details=f"Using: {source_type}"
+    )  # Translated # Updated call
+
     progress_tracker.start_step(
         "Identifying log files to process"
     )  # Translated # Updated call
-    to_proc = []
-    try:
-        to_proc = list_all_logs(maillog_path) if last_off == 0 else [maillog_path]
-        progress_tracker.complete_step(  # Updated call
-            "Identifying log files to process",  # Translated
-            True,
-            details=f"{len(to_proc)} file(s)",  # Translated
-        )
-        logger.debug(f"Files to process: {to_proc}, starting from offset: {last_off}")
-    except OSError as e:  # Path.glob can raise OSError
-        logger.error(f"Failed to identify log files: {e}", exc_info=True)
-        progress_tracker.complete_step(  # Updated call
-            "Identifying log files to process", False, details=str(e)  # Translated
-        )
-        progress_tracker.finalize(
-            False, "Could not identify log files."
-        )  # Translated # Updated call
-        sys.exit(1)
+    
+    if source_type == "syslog":
+        # Traditional syslog file processing
+        to_proc = []
+        try:
+            to_proc = list_all_logs(maillog_path) if last_off == 0 else [maillog_path]
+            progress_tracker.complete_step(  # Updated call
+                "Identifying log files to process",  # Translated
+                True,
+                details=f"{len(to_proc)} file(s)",  # Translated
+            )
+            logger.debug(f"Files to process: {to_proc}, starting from offset: {last_off}")
+        except OSError as e:  # Path.glob can raise OSError
+            logger.error(f"Failed to identify log files: {e}", exc_info=True)
+            progress_tracker.complete_step(  # Updated call
+                "Identifying log files to process", False, details=str(e)  # Translated
+            )
+            progress_tracker.finalize(
+                False, "Could not identify log files."
+            )  # Translated # Updated call
+            sys.exit(1)
+
+        # Create syslog reader
+        try:
+            log_reader = create_log_reader(
+                "syslog",
+                filepaths=to_proc,
+                maillog_path=maillog_path,
+                is_gzip_func=is_gzip,
+                logger=logger
+            )
+        except ValueError as e:
+            logger.error(f"Failed to create syslog reader: {e}")
+            progress_tracker.complete_step(
+                "Identifying log files to process", False, details=str(e)
+            )
+            progress_tracker.finalize(False, "Could not create log reader.")
+            sys.exit(1)
+    else:
+        # Journald processing
+        try:
+            # For journald, we don't need file identification
+            progress_tracker.complete_step(
+                "Identifying log files to process",
+                True,
+                details=f"Using journald unit: {journald_unit}"
+            )
+            
+            # Create journald reader
+            log_reader = create_log_reader(
+                "journald",
+                logger=logger,
+                unit=journald_unit
+            )
+        except ValueError as e:
+            logger.error(f"Failed to create journald reader: {e}")
+            progress_tracker.complete_step(
+                "Identifying log files to process", False, details=str(e)
+            )
+            progress_tracker.finalize(False, "Could not create log reader.")
+            sys.exit(1)
 
     csv_file_to_extract = workdir / CSV_FILENAME
 
@@ -665,23 +736,22 @@ def main():
     # update_indeterminate_progress("Traitement en cours...") # REMOVED
     new_off = -1
     try:
-        new_off = extract_entries(
-            filepaths=to_proc,
-            maillog_path_obj=maillog_path,
+        # Use the new LogReader abstraction
+        new_off = extract_entries_with_reader(
+            log_reader=log_reader,
             csvpath_param=str(csv_file_to_extract),
             logger=logger,
             ip_info_mgr=IP_INFO_MANAGER,
             reverse_lookup_func=reverse_lookup,
-            is_gzip_func=is_gzip,
             offset=last_off,
             progress_callback=progress_tracker.update_progress,  # ADDED # Updated call
         )
-        # Handle different outcomes of extract_entries regarding new_off
+        # Handle different outcomes of extract_entries_with_reader regarding new_off
         # The success/failure of complete_step for "Extracting log entries"
         # should still be determined by the value of new_off or exceptions as before.
         # The progress_callback within extract_entries only handles the bar itself.
         if (
-            new_off == -1 and last_off == 0 and not to_proc
+            new_off == -1 and last_off == 0
         ):  # Adjusted condition based on previous diff
             progress_tracker.complete_step(  # Updated call
                 "Extracting entries from log files",  # Translated

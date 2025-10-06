@@ -364,3 +364,38 @@ table_name = my_event_log
     # Check values from file for [sql_export_settings]
     assert config.sql_column_mapping_file_path_str == "/etc/maillog_map.json"
     assert config.sql_target_table_name == "my_event_log"
+
+
+def test_appconfig_log_source_defaults(tmp_path: Path, mock_logger: MagicMock):
+    """Test that log_source defaults are used when no config file exists."""
+    non_existent_path = tmp_path / "non_existent.conf"
+    app_config = AppConfig(non_existent_path, logger=mock_logger)
+    
+    # Check log_source defaults
+    assert app_config.log_source_type == "auto"
+    assert app_config.journald_unit == "postfix.service"
+
+
+def test_appconfig_log_source_from_file(tmp_path: Path, mock_logger: MagicMock):
+    """Test that log_source configuration is loaded from file."""
+    content = """
+[log_source]
+source_type = journald
+journald_unit = mail.service
+
+[paths]
+working_dir = /custom/working
+mail_log = /custom/mail.log
+"""
+    config_file = create_config_file(tmp_path, content)
+    app_config = AppConfig(config_file, logger=mock_logger)
+
+    assert app_config.config_loaded_successfully
+    
+    # Check that new log_source section is loaded
+    assert app_config.log_source_type == "journald"
+    assert app_config.journald_unit == "mail.service"
+    
+    # Check that existing sections still work
+    assert app_config.working_dir == Path("/custom/working")
+    assert app_config.mail_log == Path("/custom/mail.log")

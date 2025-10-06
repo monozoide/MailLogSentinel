@@ -55,6 +55,10 @@ DEFAULT_CONFIG: Dict[str, Dict[str, Any]] = {
         "column_mapping_file": "",  # Empty string means use bundled default unless overridden by user
         "table_name": "maillogsentinel_events",
     },
+    "log_source": {
+        "source_type": "auto",  # auto, syslog, or journald
+        "journald_unit": "postfix.service",  # systemd unit for journald
+    },
 }
 
 
@@ -167,6 +171,10 @@ class AppConfig:
             "sql_export_settings", "column_mapping_file"
         )
         self.sql_target_table_name = self._get_str("sql_export_settings", "table_name")
+
+        # [log_source]
+        self.log_source_type = self._get_str("log_source", "source_type")
+        self.journald_unit = self._get_str("log_source", "journald_unit")
 
     def _get_default(self, section: str, option: str) -> Any:
         """

@@ -24,10 +24,10 @@ import sys
 # sys.path.append(str(Path(__file__).resolve().parent.parent.parent / "bin")) # Removed for cleaner path management
 import ipinfo
 
-# Local imports
 from lib.maillogsentinel.log_utils import (
     _parse_log_line,
 )  # Import the centralized function
+from lib.maillogsentinel.log_reader import LogReader  # Import the new LogReader abstraction
 
 
 # Constants are now in log_utils.py
@@ -216,3 +216,97 @@ def extract_entries(
         f"Finished processing all {total_files} specified file(s). Final offset for {maillog_path_obj.name} is {new_off}."
     )
     return new_off
+
+
+def extract_entries_with_reader(
+    log_reader: LogReader,
+    csvpath_param: str,
+    logger: logging.Logger,
+    ip_info_mgr: Optional[
+        "ipinfo.ipinfo.IPInfoManager"
+    ],
+    reverse_lookup_func: Callable,
+    offset: int = 0,
+    progress_callback: Optional[Callable[[int, int], None]] = None,
+) -> int:
+    """
+    Extracts SASL authentication failure entries using a LogReader and appends them to a CSV file.
+
+    This function uses the LogReader abstraction to read log entries from any source
+    (syslog files or journald), identifies lines corresponding to SASL authentication 
+    failures using `_parse_log_line` from `log_utils`, and writes the extracted data 
+    as new rows in the specified CSV file.
+
+    Args:
+        log_reader: A LogReader instance to read log entries from
+        csvpath_param: The path (string) to the CSV file where extracted entries
+                       will be written. A header is added if the file doesn't exist.
+        logger: A `logging.Logger` instance for logging progress and errors.
+        ip_info_mgr: An optional `ipinfo.IPInfoManager` instance passed to
+                     `_parse_log_line` for IP geolocation lookups.
+        reverse_lookup_func: A callable passed to `_parse_log_line` for
+                             performing reverse DNS lookups.
+        offset: The initial offset to start reading from in the log source.
+        progress_callback: An optional callable that is invoked during processing
+                           to update progress. For LogReader, this will be called
+                           periodically during entry processing.
+
+    Returns:
+        The new offset to be used for the next incremental read.
+    """
+    csv_file_path = Path(csvpath_param)
+    header = not csv_file_path.is_file()
+    current_year = datetime.now().year
+    
+    entries_processed = 0
+    
+    logger.info("Starting log entry extraction with LogReader")
+
+    with csv_file_path.open("a", encoding="utf-8", newline="") as csvf:
+        writer = csv.writer(csvf, delimiter=";", quoting=csv.QUOTE_MINIMAL)
+        if header:
+            writer.writerow(
+                [
+                    "server",
+                    "date",
+                    "ip",
+                    "user",
+                    "hostname",
+                    "reverse_dns_status",
+                    "country_code",
+                    "asn",
+                    "aso",
+                ]
+            )
+
+        try:
+            for line in log_reader.read_entries(offset):
+                parsed_data = _parse_log_line(
+                    line,
+                    current_year,
+                    logger,
+                    ip_info_mgr,
+                    reverse_lookup_func,
+                )
+                if parsed_data:
+                    writer.writerow(list(parsed_data.values()))
+                
+                entries_processed += 1
+                
+                # Call progress callback periodically
+                if progress_callback and entries_processed % 100 == 0:
+                    # For LogReader, we don't have a total count, so we'll use indeterminate progress
+                    progress_callback(entries_processed, -1)  # -1 indicates indeterminate
+                
+        except Exception as e:
+            logger.error(f"Error during log entry extraction: {e}", exc_info=True)
+            raise
+
+    new_offset = log_reader.get_new_offset()
+    logger.info(f"Finished processing log entries. New offset: {new_offset}, entries processed: {entries_processed}")
+    
+    # Final progress callback
+    if progress_callback:
+        progress_callback(entries_processed, entries_processed)
+    
+    return new_offset
