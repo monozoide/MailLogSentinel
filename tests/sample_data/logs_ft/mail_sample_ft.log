@@ -1,0 +1,3 @@
+Jan  1 01:00:00 hostA postfix/smtpd[100]: client=unknown[1.1.1.1], sasl_method=PLAIN, sasl_username=user1@example.com
+Jan  1 01:00:01 hostA postfix/smtpd[101]: client=unknown[2.2.2.2], sasl_method=LOGIN, sasl_username=user2@example.com
+Jan  1 01:00:02 hostA postfix/smtpd[102]: client=unknown[3.3.3.3], sasl_method=PLAIN, sasl_username=user3@example.com
