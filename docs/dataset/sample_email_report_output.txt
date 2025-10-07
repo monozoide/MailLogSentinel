@@ -1,0 +1,79 @@
+##################################################
+### MailLogSentinel v1.0.5-A                     ###
+### Extraction interval : hourly                 ###
+### Report at 2025-05-28 10:30                   ###
+### Server: 192.168.1.10   (mail.example.com)    ###
+##################################################
+
+Total attempts today: 55
+
+Top 10 failed authentications today:
+   1. user@example.com     111.222.11.22  host.attacker.cn   CN  5 times
+   2. admin@example.com    22.33.44.55    another.host.ru    RU  4 times
+   3. testuser             123.123.1.2    unknown.host.br    BR  3 times
+   4. support@example.com  99.88.77.6     some.server.us     US  3 times
+   5. webmaster            10.20.30.40    dynamic.isp.de     DE  2 times
+   6. info@example.com     5.15.25.35     mail.other.net     GB  2 times
+   7. user.1@domain.tld    220.182.17.122 null               N/A 1 times
+   8. user.1               81.189.180.120 null               N/A 1 times
+   9. qijoxuli@domain.tld  31.25.31.12    host.example.ru    RU  1 times
+  10. info@domain.com      73.197.194.98  c-73-197-194-98... US  1 times
+
+Top 10 Usernames today:
+   1. user@example.com         10 times
+   2. user.1@domain.tld			6 times
+   3. contact@domain.com		3 times
+   4. user2@domain.tld			2 times
+   5. user2						2 times
+   6. info@domain.com			2 times
+   7. contact					2 times
+   8. other						2 times
+   9. qijoxuli@domain.tld		1 times
+  10. qijoxuli					1 times
+  
+Top 10 countries today:
+   1. CN             6 times
+   2. RU             1 times
+   3. MY             1 times
+   4. AU             1 times
+   5. AE             1 times
+   6. BR             1 times
+   7. US             1 times
+   8. MD             1 times
+
+Top 10 ASO today:
+   1. CHINA UNICOM China169 Backbone                                                2 times
+   2. China Mobile Communications Corporation                                       2 times
+   3. PJSC Moscow city telephone network                                            1 times
+   4. China Unicom IP network China169 Guangdong province                           1 times
+   5. China Mobile                                                                  1 times
+   6. Celcom Axiata Berhad                                                          1 times
+   7. AAPT Limited                                                                  1 times
+   8. Hulum Almustakbal Company for Communication Engineering and Services Ltd      1 times
+   9. TELEFONICA BRASIL S.A                                                         1 times
+  10. Frontier Communications of America, Inc.                                      1 times
+
+Top 10 ASN today:
+   1. 4837        2 times
+   2. 134810      2 times
+   3. 25513       1 times
+   4. 17816       1 times
+   5. 9808        1 times
+   6. 10030       1 times
+   7. 2764        1 times
+   8. 203214      1 times
+   9. 18881       1 times
+  10. 5650        1 times
+
+--- Reverse DNS Lookup Failure Summary ---
+Total failed reverse lookups today: 26
+Breakdown by error type:
+  Errno 1 : 24
+  Errno 2 :  2
+
+Total CSV file size: 241.1K
+Total CSV lines:     3613
+
+Please see attached: maillogsentinel.csv
+
+For more details and documentation, visit: https://github.com/monozoide/MailLogSentinel
