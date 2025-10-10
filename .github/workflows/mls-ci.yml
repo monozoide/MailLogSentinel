@@ -1,4 +1,4 @@
-name: MLS ci
+name: MLS CI
 
 on:
   pull_request:
@@ -8,78 +8,173 @@ on:
 
 permissions:
   contents: read
+  pull-requests: read
 
 jobs:
   changes:
-    name: detect-changes
+    name: Detect changes
     runs-on: ubuntu-latest
     outputs:
-      code_changed: ${{ steps.filter.outputs.code }}
+      code_changed: ${{ steps.collect.outputs.code_changed }}
+      docs_changed: ${{ steps.collect.outputs.docs_changed }}
+      only_docs: ${{ steps.collect.outputs.only_docs }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - id: filter
+
+      # PR: diff base/head géré automatiquement
+      - name: Paths filter (PR)
+        id: filter_pr
+        if: ${{ github.event_name == 'pull_request' }}
         uses: dorny/paths-filter@v3
         with:
           filters: |
             code:
-              - '!docs/**'
-              - '!**/*.md'
-              - '!**/*.mdx'
-              - '!**/*.png'
-              - '!**/*.jpg'
-              - '!**/*.jpeg'
-              - '!**/*.gif'
-              - '!**/*.svg'
-              - '!**/*.yaml'
-              - '!**/*.yml'
-              - '**'
+              - 'src/**'
+              - 'app/**'
+              - 'lib/**'
+              - 'scripts/**'
+              - '**/*.py'
+              - '**/*.rs'
+              - '**/*.go'
+              - '**/*.ts'
+              - '**/*.js'
+              - '**/*.tsx'
+              - '**/*.jsx'
+              - 'tests/**'
+              - 'pytest.ini'
+              - 'pyproject.toml'
+              - 'setup.cfg'
+              - 'requirements*.txt'
+              - '**/*.html'
+            docs:
+              - 'docs/**'
+              - '**/*.md'
+              - '**/*.mdx'
+              - '**/*.txt'
+              - '**/*.rst'
+              - '**/*.yml'
+              - '**/*.yaml'
+              - '**/*.json'
+              - '**/*.toml'
+              - '**/*.cfg'
+              - '**/*.png'
+              - '**/*.jpg'
+              - '**/*.jpeg'
+              - '**/*.svg'
+              - '**/*.log'
+              - '**/*.csv'
+
+      # PUSH: on force la base/ref du diff
+      - name: Paths filter (push)
+        id: filter_push
+        if: ${{ github.event_name == 'push' }}
+        uses: dorny/paths-filter@v3
+        with:
+          base: ${{ github.event.before }}
+          ref:  ${{ github.sha }}
+          filters: |
+            code:
+              - 'src/**'
+              - 'app/**'
+              - 'lib/**'
+              - 'scripts/**'
+              - '**/*.py'
+              - '**/*.rs'
+              - '**/*.go'
+              - '**/*.ts'
+              - '**/*.js'
+              - '**/*.tsx'
+              - '**/*.jsx'
+              - 'tests/**'
+              - 'pytest.ini'
+              - 'pyproject.toml'
+              - 'setup.cfg'
+              - 'requirements*.txt'
+              - '**/*.html'
+            docs:
+              - 'docs/**'
+              - '**/*.md'
+              - '**/*.mdx'
+              - '**/*.txt'
+              - '**/*.rst'
+              - '**/*.yml'
+              - '**/*.yaml'
+              - '**/*.json'
+              - '**/*.toml'
+              - '**/*.cfg'
+              - '**/*.png'
+              - '**/*.jpg'
+              - '**/*.jpeg'
+              - '**/*.svg'
+              - '**/*.log'
+              - '**/*.csv'
+
+      # On collecte les sorties en un seul endroit (ID unique)
+      - name: Collect outputs
+        id: collect
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            CODE='${{ steps.filter_push.outputs.code }}'
+            DOCS='${{ steps.filter_push.outputs.docs }}'
+          else
+            CODE='${{ steps.filter_pr.outputs.code }}'
+            DOCS='${{ steps.filter_pr.outputs.docs }}'
+          fi
+
+          echo "code_changed=$CODE" >> "$GITHUB_OUTPUT"
+          echo "docs_changed=$DOCS" >> "$GITHUB_OUTPUT"
+
+          if [ "$DOCS" = "true" ] && [ "$CODE" != "true" ]; then
+            echo "only_docs=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "only_docs=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Debug
+        run: |
+          echo "code=${{ steps.collect.outputs.code_changed }}"
+          echo "docs=${{ steps.collect.outputs.docs_changed }}"
+          echo "only_docs=${{ steps.collect.outputs.only_docs }}"
+
 
   lint:
-    name: lint
     runs-on: ubuntu-latest
     needs: changes
     if: needs.changes.outputs.code_changed == 'true'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        with:
-          python-version: '3.9'
-          cache: 'pip'
-      - run: python -m pip install --upgrade pip
-      - run: |
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          pip install flake8
-      - name: flake8
+        with: { python-version: '3.11', cache: 'pip' }
+      - name: Install deps for lint
         run: |
-          flake8 . --count --select=E9,F63,F7,F82,F821,F823,F824 --show-source --statistics
-          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install ruff
+      - run: ruff check .
 
   tests:
-    name: tests
     runs-on: ubuntu-latest
     needs: changes
     if: needs.changes.outputs.code_changed == 'true'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        with:
-          python-version: '3.9'
-          cache: 'pip'
-      - run: python -m pip install --upgrade pip
-      - run: |
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          pip install pytest
-      - name: pytest
+        with: { python-version: '3.11', cache: 'pip' }
+      - name: Install deps for tests
         run: |
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install -r requirements-dev.txt || true
+          pip install pytest
+      - run: |
           export PYTHONPATH=$PYTHONPATH:.
           pytest --maxfail=1 --disable-warnings -q
 
   docs-only:
-    name: docs-only fast-path
+    name: Docs-only fast path
     runs-on: ubuntu-latest
     needs: changes
-    if: needs.changes.outputs.code_changed != 'true'
+    if: needs.changes.outputs.only_docs == 'true'
     steps:
-      - run: echo "Docs-only change → skipping lint/tests ✅"
+      - run: echo "Docs/meta only → skipping lint/tests ✅"
