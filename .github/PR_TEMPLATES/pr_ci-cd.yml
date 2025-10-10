@@ -1,0 +1,86 @@
+<!-- Type: CICD -->
+
+# 🎯 Goals
+
+_Summarize in 2–3 sentences **why** this CI/CD PR exists and what it changes._
+
+# 🔧 Scope of changes
+
+- [ ] CI/CD workflow modification (GitHub Actions)
+- [ ] Template modification
+- [ ] Addition/modification of tests
+
+## Modified CI/CD workflows and/or templates
+
+_If applicable, list the modified GitHub Actions workflows or templates_
+
+# 🧪 Tests
+
+# Tests added/modified
+
+- [ ] Unit tests
+- [ ] Integration tests
+- [ ] Regression tests
+
+**Details:**
+_Describe the test scenarios covered_
+
+# Code coverage
+
+- [ ] Code coverage maintained or improved
+- [ ] Current coverage: __%
+- [ ] New coverage: __%
+
+# Local execution
+
+- [ ] Tests pass locally (`pytest` or equivalent)
+- [ ] Application runs correctly locally
+
+# Version compatibility
+
+- [ ] Postfix:
+- [ ] Python:
+- [ ] Journald:
+- [ ] Syslog:
+- [ ] Debian:
+
+# 🔒 Security & permissions
+
+- Does this PR reduce/maintain/increase permissions?  
+  - [ ] Reduce
+  - [ ] Maintain
+  - [ ] Increase (justify below)
+
+- Justification for elevated permissions (if applicable):  
+  > …
+
+# 🧾 Changelog (CI/CD)
+
+- **Additions:**  
+  - …
+- **Modifications:**  
+  - …
+- **Deletions:**  
+  - …
+
+# 🔗 Links
+Closes #        _main issue_
+Related:        _Related PR/Issues_
+
+# 📚 Docs & communication
+
+- [ ] README / Contributing updated if the workflow changes
+- [ ] Inline comments added in YAML to explain design choices
+- [ ] Link to design discussion/issue (if any): ________
+
+---
+
+# ✅ Project checklist
+- [ ] All my commits are **signed (GPG/SSH)** in accordance with the [contribution guide](../blob/main/docs/CONTRIBUTING.md)
+- [ ] `lint` passes locally and in CI
+- [ ] No sensitive data exposed (credentials, tokens)
+- [ ] Manual validation completed
+- [ ] The added/covered tests are relevant for the feature
+- [ ] User/developer documentation is up to date (where applicable)
+- [ ] Security/performance impacts have been reviewed
+- [ ] I have described a clear manual validation procedure

@@ -1,0 +1,74 @@
+<!-- Type: Code -->
+
+# 🔎 Context
+_Why this change? Problem / goal._
+
+# ✨ Nature of the change
+_Check what applies_
+
+- [ ] Refactor (no functional change)
+- [ ] Performance (optimizations)
+- [ ] Chore / Tooling
+- [ ] Upgrade dependencies
+- [ ] Security (hardening, permissions, etc.)
+- [ ] Other:
+
+# 🧩 Implementation details
+_Impacted files/modules. Design rationale. Considered alternatives._
+
+- Impacted modules:
+- Key decisions:
+
+# 🛡️ Impacts (Security / Privacy / Performance)
+_Sensitive data? Latency/CPU/memory? Cache?_
+
+- Security:
+- Privacy:
+- Performance:
+
+# 🔁 Compatibility / Breaking changes
+_Any breaking change? DB migrations/API contracts?_
+
+- Breaking: Yes / No
+- API/contracts:
+- DB migrations:
+
+# 🧪 Tests
+- [ ] Unit
+- [ ] Integration
+- [ ] E2E / manual (describe below)
+
+**Manual validation procedure:**
+1. …
+2. …
+3. Expected result: …
+
+# 📚 Documentation
+- [ ] README / Docs updated (if needed)
+- [ ] Changelog / Release notes
+
+# 🔗 Dependencies & Flags
+- Dependent PRs / services:
+- Feature flag/toggle (if used): name, strategy, cleanup date
+
+# 🖼️ Screenshots / Evidence
+_Logs, screenshots, before/after, benchmarks, profiles_
+
+- Benchmarks / profiling:
+- Screenshots:
+
+# 🔗 Links
+Closes #        _main issue_
+Related:        _Related PR/Issues_
+
+---
+
+# ✅ Project checklist
+- [ ] All my commits are **signed (GPG/SSH)** in accordance with the [contribution guide](../blob/main/docs/CONTRIBUTING.md)
+- [ ] `lint` passes locally and in CI
+- [ ] No sensitive data exposed (credentials, tokens)
+- [ ] Manual validation completed
+- [ ] The added/covered tests are relevant for the feature
+- [ ] User/developer documentation is up to date (where applicable)
+- [ ] Security/performance impacts have been reviewed
+- [ ] I have described a clear manual validation procedure

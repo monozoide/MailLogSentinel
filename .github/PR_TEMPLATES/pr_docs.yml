@@ -1,0 +1,44 @@
+<!-- Type: Documentation -->
+
+# 📝 Document purpose
+_Summarize what changes and why (fix, addition, overhaul). 
+
+# 📚 Scope
+_List affected files/sections/doc sites_
+
+- Files/sections:
+- Target audience: (users / devs / ops)
+
+# 🔍 Context
+_What was the problem (gap, outdated docs, ambiguity)?_
+
+# ✅ Content added/modified
+_Detail notable changes: new chapters, examples, diagrams, ADR, FAQ_
+
+# 🧪 Verification
+- [ ] Examples/commands have been tested manually
+- [ ] Internal/external links work
+- [ ] Code snippets compile/run (if applicable)
+
+# 🔄 Synchronization with code/product
+_Which version/feature flag does this doc correspond to?_
+
+# 🧹 Deprecation
+_Sections removed/deprecated; redirects or archive notes_
+
+# 🖼️ Assets
+_Screenshots, diagrams, sources (draw.io/Excalidraw) + location of source files_
+
+# 🔗 Links
+Closes #        _main issue_
+Related:        _Related PR/Issues_
+
+---
+
+# ✅ Project checklist
+- [ ] All my commits are **signed (GPG/SSH)** in accordance with the [contribution guide](../blob/main/docs/CONTRIBUTING.md)
+- [ ] Commits **signed (GPG/SSH)**
+- [ ] Markdown/spell linter run (e.g., `markdownlint`, `vale`)
+- [ ] Links checked (e.g., `lychee`) and images optimized
+- [ ] CHANGELOG updated if needed
+- [ ] Consistency with the corresponding version/feature confirmed
