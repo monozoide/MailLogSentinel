@@ -138,7 +138,7 @@ Before coding:
 - **"Can I use AI tools?"** → Yes, but you must understand and test the code
 - **"What if I can't finish?"** → Comment on the issue to release it
 
-**Still have questions?** Use [Discussions](../../discussions) or comment on the issue.
+**Still have questions?** Use [Discussions](../../../discussions) or comment on the issue.
 
 ---
 

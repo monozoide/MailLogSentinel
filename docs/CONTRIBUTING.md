@@ -30,7 +30,7 @@ The following is highly recommended:
 - **Technical**: Comment on the issue
 - **General**: Use [Discussions](../../discussions)
 - **Unclear instructions**: Ask before coding, never guess
-- Need more details? ➡️ [CONTRIBUTING_DETAILED.md](../docs/CONTRIBUTING_DETAILED.md)
+- Need more details? ➡️ [CONTRIBUTING_DETAILED.md](./docs/CONTRIBUTING_DETAILED.md)
 
 
 Thank you! 🚀
