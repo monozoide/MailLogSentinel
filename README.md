@@ -114,7 +114,7 @@ python3 /usr/local/bin/maillogsentinel.py --report
 
 ## 📊 Sample Output
 
-[Daily email report example](../docs/dataset/sample_email_report_output.txt)
+[Daily email report example](docs/dataset/sample_email_report_output.txt)
 
 ## 💣 Basic Commands
 
