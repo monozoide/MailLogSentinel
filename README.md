@@ -114,7 +114,7 @@ python3 /usr/local/bin/maillogsentinel.py --report
 
 ## 📊 Sample Output
 
-[Daily email report example](../docs/sample_email_report_output.txt)
+[Daily email report example](../docs/dataset/sample_email_report_output.txt)
 
 ## 💣 Basic Commands
 
@@ -127,15 +127,15 @@ python3 /usr/local/bin/maillogsentinel.py --report
 
 ## 📚 Documentation
 
-- **[Installation Guide](../../wiki/Setup)** - Detailed setup instructions
-- **[Configuration](../../wiki/Configuration)** - All config options explained
-- **[Advanced Features](../../wiki/Features)** - SQL export, log anonymization, custom reports
-- **[Troubleshooting](../../wiki/Troubleshooting)** - Common issues and solutions
-- **[API Documentation](../../tree/main/docs/api)** - For developers
+- **[Installation Guide](../../../wiki/Setup)** - Detailed setup instructions
+- **[Configuration](../../../wiki/Configuration)** - All config options explained
+- **[Advanced Features](../../../wiki/Features)** - SQL export, log anonymization, custom reports
+- **[Troubleshooting](../../../wiki/Troubleshooting)** - Common issues and solutions
+- **[API Documentation](../../../tree/main/docs/api)** - For developers
 
 ## 🤝 Contributing
 
-Contributions welcome! Please check our [Contributing Guide](https://github.com/monozoide/MailLogSentinel/wiki/Contributing).
+Contributions welcome! Please check our [Contributing Guide](https://github.com/monozoide/MailLogSentinel/wiki/How-can-I-contribute%3F).
 
 > [!CAUTION]
 > The use of AI tools is permitted, provided that the contributor uses them in a reasonable manner. 
@@ -162,5 +162,6 @@ If you find this useful, consider supporting development:
 
 ---
 
-_We have no right to believe that freedom can be won without a struggle._
+> _We have no right to believe that freedom can be won without a struggle._
+
 Che Guevara
