@@ -1,0 +1,125 @@
+.TH IPINFO 8 "2025-10-13" "MailLogSentinel" "System Administration Commands"
+.SH NAME
+ipinfo \- IP address information lookup utility
+.SH SYNOPSIS
+.B ipinfo.py
+[\fB\-h\fR]
+[\fB\-\-update\fR]
+[\fB\-\-country-db-path\fR \fIPATH\fR]
+[\fB\-\-asn-db-path\fR \fIPATH\fR]
+[\fB\-\-country-db-url\fR \fIURL\fR]
+[\fB\-\-asn-db-url\fR \fIURL\fR]
+[\fB\-\-data-dir\fR \fIDIR\fR]
+[\fB\-\-config\fR \fIFILE\fR]
+[\fIip_address\fR]
+.SH DESCRIPTION
+.B ipinfo.py
+is a command-line utility for looking up geographical and network information about IP addresses.
+It uses local databases for country and ASN (Autonomous System Number) information,
+providing fast offline lookups without requiring external API calls.
+.PP
+The utility can download and update its databases from public IP location repositories,
+making it suitable for integration into logging and monitoring systems like MailLogSentinel.
+.SH OPTIONS
+.TP
+.I ip_address
+IP address to look up (e.g., 8.8.8.8). If not provided, the utility displays usage information.
+.TP
+.BR \-h ", " \-\-help
+Display help message and exit.
+.TP
+.BR \-\-update
+Download or update both IP databases (Country and ASN). This fetches the latest versions
+from the configured URLs and stores them in the appropriate locations.
+.TP
+.BI \-\-country-db-path " PATH"
+Path to store or load the country database.
+.br
+Default: \fI~/.ipinfo/country_aside.csv\fR
+.TP
+.BI \-\-asn-db-path " PATH"
+Path to store or load the ASN database.
+.br
+Default: \fI~/.ipinfo/ip2asn-lite.csv\fR
+.TP
+.BI \-\-country-db-url " URL"
+URL for downloading the country database.
+.br
+Default: \fIhttps://raw.githubusercontent.com/sapics/ip-location-db/main/asn-country/asn-country-ipv4-num.csv\fR
+.TP
+.BI \-\-asn-db-url " URL"
+URL for downloading the ASN database.
+.br
+Default: \fIhttps://raw.githubusercontent.com/sapics/ip-location-db/refs/heads/main/asn/asn-ipv4-num.csv\fR
+.TP
+.BI \-\-data-dir " DIR"
+Directory to store or load all IP database files. If specified, this overrides the default
+directory component of \fB\-\-country-db-path\fR and \fB\-\-asn-db-path\fR unless they are
+specified as absolute paths.
+.TP
+.BI \-\-config " FILE"
+Path to maillogsentinel.conf configuration file. When specified, database paths and URLs
+can be read from the configuration file instead of using command-line options.
+.SH FILES
+.TP
+.I ~/.ipinfo/country_aside.csv
+Default location for the country database.
+.TP
+.I ~/.ipinfo/ip2asn-lite.csv
+Default location for the ASN database.
+.TP
+.I maillogsentinel.conf
+Optional configuration file for setting database paths and URLs.
+.SH EXAMPLES
+.TP
+Look up information for a specific IP address:
+.EX
+ipinfo.py 8.8.8.8
+.EE
+.TP
+Update both databases to their latest versions:
+.EX
+ipinfo.py --update
+.EE
+.TP
+Look up an IP using a custom data directory:
+.EX
+ipinfo.py --data-dir /var/lib/ipinfo 1.1.1.1
+.EE
+.TP
+Use a custom configuration file:
+.EX
+ipinfo.py --config /etc/maillogsentinel.conf 8.8.4.4
+.EE
+.TP
+Specify custom database paths:
+.EX
+ipinfo.py --country-db-path /opt/db/country.csv \\
+          --asn-db-path /opt/db/asn.csv 192.168.1.1
+.EE
+.SH EXIT STATUS
+.TP
+.B 0
+Successful execution.
+.TP
+.B 1
+General error (invalid IP address, database not found, network error during update).
+.SH SEE ALSO
+.BR whois (1),
+.BR dig (1),
+.BR host (1),
+.BR geoiplookup (1)
+.SH BUGS
+Report bugs at:
+.UR https://github.com/monozoide/MailLogSentinel/issues
+.UE
+.SH AUTHOR
+MailLogSentinel Project
+.SH COPYRIGHT
+This utility is part of the MailLogSentinel project.
+.PP
+Database sources:
+.br
+IP location databases by sapics
+.UR https://github.com/sapics/ip-location-db
+.UE

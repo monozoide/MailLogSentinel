@@ -1,0 +1,135 @@
+.TH LOG_ANONYMIZER 8 "2025-10-13" "1.0" "System Administration Commands"
+.SH NAME
+log_anonymizer \- anonymize sensitive information in log files
+.SH SYNOPSIS
+.B log_anonymizer.py
+.RB [ \-h ]
+.B \-i
+.I INPUT_FILE
+.B \-o
+.I OUTPUT_FILE
+.RB [ \-t
+.IR TEMP_DIR ]
+.RB [ \-\-config
+.IR CONFIG ]
+.RB [ \-\-log\-level
+.IR LEVEL ]
+.RB [ \-\-script\-log\-file
+.IR SCRIPT_LOG_FILE ]
+.SH DESCRIPTION
+.B log_anonymizer
+is a tool designed to anonymize sensitive information contained in email log files.
+It processes input log files and generates anonymized output files by applying
+configurable anonymization rules to protect private data while maintaining
+the utility of the logs for debugging and analysis purposes.
+.PP
+The tool supports customizable anonymization rules through configuration files
+and provides comprehensive logging capabilities to track the anonymization process.
+.SH OPTIONS
+.TP
+.BR \-h ", " \-\-help
+Display help message and exit.
+.TP
+.BR \-i ", " \-\-input\-file " " \fIINPUT_FILE\fR
+Specify the input log file to be anonymized. This option is mandatory.
+.TP
+.BR \-o ", " \-\-output\-file " " \fIOUTPUT_FILE\fR
+Specify the output file where the anonymized log will be written. This option is mandatory.
+.TP
+.BR \-t ", " \-\-temp\-dir " " \fITEMP_DIR\fR
+Specify an optional temporary directory to use during processing. If not provided,
+the system default temporary directory will be used.
+.TP
+.BR \-\-config " " \fICONFIG\fR
+Specify a configuration file containing custom anonymization rules. This allows
+fine-tuning of the anonymization behavior to match specific requirements.
+.TP
+.BR \-\-log\-level " " \fILEVEL\fR
+Set the logging level for the script execution. Valid values are:
+.BR DEBUG ", " INFO ", " WARNING ", " ERROR ", and " CRITICAL .
+This controls the verbosity of diagnostic output during execution.
+.TP
+.BR \-\-script\-log\-file " " \fISCRIPT_LOG_FILE\fR
+Specify an optional path to a file where script execution logs will be saved.
+If not provided, logs are output to standard error only.
+.SH EXAMPLES
+.PP
+Basic anonymization of a log file:
+.PP
+.nf
+.RS
+python3 log_anonymizer.py \-i /var/log/mail.log \-o /tmp/mail_anonymized.log
+.RE
+.fi
+.PP
+Anonymization with custom configuration and debug logging:
+.PP
+.nf
+.RS
+python3 log_anonymizer.py \-i /var/log/mail.log \-o /tmp/safe.log \\
+    \-\-config /etc/anonymizer/rules.conf \\
+    \-\-log\-level DEBUG \\
+    \-\-script\-log\-file /var/log/anonymizer_execution.log
+.RE
+.fi
+.PP
+Using a custom temporary directory:
+.PP
+.nf
+.RS
+python3 log_anonymizer.py \-i input.log \-o output.log \-t /mnt/fast_storage/tmp
+.RE
+.fi
+.SH FILES
+.TP
+.I /etc/anonymizer/rules.conf
+Default location for system-wide anonymization rules configuration (if applicable).
+.TP
+.I ~/.config/anonymizer/config
+User-specific configuration file (if applicable).
+.SH EXIT STATUS
+.TP
+.B 0
+Successful completion.
+.TP
+.B 1
+General error occurred during execution.
+.TP
+.B 2
+Invalid command-line arguments or missing required options.
+.SH NOTES
+The script requires Python 3 to run. Ensure that all required Python dependencies
+are installed before execution.
+.PP
+Large log files may require significant temporary disk space during processing.
+Use the
+.B \-t
+option to specify a temporary directory with adequate space if needed.
+.PP
+The quality of anonymization depends on the rules defined in the configuration file.
+Review and test your configuration thoroughly before processing sensitive production logs.
+.SH SECURITY CONSIDERATIONS
+While this tool anonymizes data according to configured rules, it is the
+administrator's responsibility to:
+.IP \(bu 3
+Verify that all sensitive data types are properly covered by anonymization rules
+.IP \(bu 3
+Securely handle both input and output files
+.IP \(bu 3
+Properly dispose of temporary files
+.IP \(bu 3
+Review anonymized output before sharing with untrusted parties
+.SH BUGS
+Report bugs at:
+.UR https://github.com/monozoide/MailLogSentinel/issues
+.UE
+.SH AUTHOR
+MailLogSentinel Project
+.SH COPYRIGHT
+This utility is part of the MailLogSentinel project.
+.SH SEE ALSO
+.BR maillogsentinel (8),
+.BR sed (1),
+.BR awk (1),
+.BR grep (1),
+.BR logrotate (8)
