@@ -127,11 +127,17 @@ python3 /usr/local/bin/maillogsentinel.py --report
 
 ## 📚 Documentation
 
-- **[Installation Guide](../../../wiki/Setup)** - Detailed setup instructions
-- **[Configuration](../../../wiki/Configuration)** - All config options explained
-- **[Advanced Features](../../../wiki/Features)** - SQL export, log anonymization, custom reports
-- **[Troubleshooting](../../../wiki/Troubleshooting)** - Common issues and solutions
+- **[Installation Guide](../../wiki/Setup)** - Detailed setup instructions
+- **[Configuration](../../wiki/Configuration)** - All config options explained
+- **[Advanced Features](../../wiki/Features)** - SQL export, log anonymization, custom reports
+- **[Troubleshooting](../../wiki/Troubleshooting)** - Common issues and solutions
 - **[API Documentation](../../../tree/main/docs/api)** - For developers
+- **[FAQ](../../wiki/FAQ.md)** - Answers for installation, configuration, usage, troubleshooting, integrations, security, and development.
+- **Manual pages:**
+  - [`maillogsentinel(8)`](docs/man/maillogsentinel.8.md) – overview, usage, options, diagnostics, security notes.
+  - [`ipinfo(1)`](docs/man/ipinfo.8.md) – command reference and examples.
+  - [`log_anonymizer(1)`](docs/man/log_anonymizer.8.md) – usage for redacting sensitive data in logs.
+
 
 ## 🤝 Contributing
 
