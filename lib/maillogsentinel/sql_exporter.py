@@ -396,9 +396,17 @@ def run_sql_export(config: AppConfig, output_log_level: str = "INFO") -> bool:
             f"{LOG_PREFIX}: No user-specific column mapping file configured, attempting to load bundled default."
         )
         try:
-            with importlib.resources.files("lib.maillogsentinel.data").joinpath(
-                "maillogsentinel_sql_column_mapping.json"
-            ) as bundled_path:
+            # Correctly handle importlib.resources for Python 3.9+
+            # The 'with' statement for pathlib.Path is removed in Python 3.13
+            # We get a Traversable object, which we can convert to a Path
+            bundled_path_traversable = importlib.resources.files(
+                "lib.maillogsentinel.data"
+            ).joinpath("maillogsentinel_sql_column_mapping.json")
+
+            # For older importlib_resources, we might need to use 'as_file' context manager
+            # but for modern Python, this direct conversion to Path is often sufficient
+            # if the resource is a file on the filesystem.
+            with importlib.resources.as_file(bundled_path_traversable) as bundled_path:
                 if (
                     not bundled_path.is_file()
                 ):  # Should not happen if packaged correctly
@@ -711,9 +719,10 @@ def _create_dummy_csv(
 
 def _get_bundled_mapping_headers_for_test():
     try:
-        with importlib.resources.files("lib.maillogsentinel.data").joinpath(
-            "maillogsentinel_sql_column_mapping.json"
-        ) as bundled_path_ref:
+        bundled_path_traversable = importlib.resources.files(
+            "lib.maillogsentinel.data"
+        ).joinpath("maillogsentinel_sql_column_mapping.json")
+        with importlib.resources.as_file(bundled_path_traversable) as bundled_path_ref:
             # The object returned by importlib.resources.files() is a Traversable
             # We need to ensure it's treated as a Path object for load_column_mapping
             mapping = load_column_mapping(Path(bundled_path_ref))
