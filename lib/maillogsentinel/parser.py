@@ -18,7 +18,6 @@ from typing import (
     Callable,
 )
 import logging
-import sys
 
 # Add bin directory to sys.path to allow importing ipinfo
 # sys.path.append(str(Path(__file__).resolve().parent.parent.parent / "bin")) # Removed for cleaner path management

@@ -751,7 +751,7 @@ def interactive_cli_setup(target_config_path, setup_log_fh):
                 setup_log_fh,
             )
             _setup_print_and_log(
-                f"You may need to manually perform these steps or re-run with sudo IF you want systemd integration.",
+                "You may need to manually perform these steps or re-run with sudo IF you want systemd integration.",
                 setup_log_fh,
             )
             _setup_print_and_log(
@@ -965,10 +965,14 @@ def interactive_cli_setup(target_config_path, setup_log_fh):
             f"FATAL ERROR during interactive setup: {e_main_interactive.__class__.__name__}: {e_main_interactive}",
             setup_log_fh,
         )
-        import traceback
+        _setup_print_and_log(
+            f"FATAL ERROR during interactive setup: {e_main_interactive.__class__.__name__}: {e_main_interactive}",
+            setup_log_fh,
+        )
+        # import traceback # No longer needed
 
-        _setup_print_and_log(traceback.format_exc(), setup_log_fh)
-        return False  # Indicate failure
+        # _setup_print_and_log(traceback.format_exc(), setup_log_fh) # No longer needed
+        return False
     return True
 
 
@@ -983,13 +987,12 @@ def non_interactive_setup(source_config_path: Path, setup_log_fh):
     Updates global backed_up_items and created_final_paths lists.
     """
     import sys  # Ensure sys is imported for stdout
-    import traceback
 
     print("non_interactive_setup CALLED", flush=True)
     # traceback.print_stack(file=sys.stdout, limit=10) # Removed for debugging
     print("---", flush=True)
 
-    _setup_print_and_log(f"--- MailLogSentinel Non-Interactive Setup ---", setup_log_fh)
+    _setup_print_and_log("--- MailLogSentinel Non-Interactive Setup ---", setup_log_fh)
 
     if os.geteuid() != 0:
         _setup_print_and_log(
@@ -1156,7 +1159,7 @@ def non_interactive_setup(source_config_path: Path, setup_log_fh):
     )
     usermod_cmd = shutil.which("usermod")
     if not usermod_cmd:
-        _setup_print_and_log(f"ERROR: 'usermod' not found.", setup_log_fh)
+        _setup_print_and_log("ERROR: 'usermod' not found.", setup_log_fh)
         sys.exit(1)  # Restored error
     try:
         process_result = subprocess.run(
