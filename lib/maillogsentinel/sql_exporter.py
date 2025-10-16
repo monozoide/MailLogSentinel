@@ -8,14 +8,14 @@ and writes it to an SQL file for later import.
 
 import csv
 import datetime
-import hashlib
 import json
 import logging
-import os
 from pathlib import Path
 from typing import Optional, List, Dict, Any
 import importlib.resources  # Added for loading bundled data
 
+import tempfile
+import shutil
 from lib.maillogsentinel.config import AppConfig  # Import AppConfig
 
 # Constants
@@ -608,7 +608,7 @@ def run_sql_export(config: AppConfig, output_log_level: str = "INFO") -> bool:
         if sql_file_path.exists():
             sql_file_path.unlink(missing_ok=True)  # cleanup
         return False
-    except CSVSchemaError as e:  # Already logged by validate_csv_header
+    except CSVSchemaError:  # Already logged by validate_csv_header
         # Cleanup already handled in validate_csv_header's calling block
         return False
     except Exception as e:
@@ -661,10 +661,6 @@ def run_sql_export(config: AppConfig, output_log_level: str = "INFO") -> bool:
         f"{LOG_PREFIX}: SQL export process complete. Final offset: {new_offset}"
     )
     return True
-
-
-import tempfile
-import shutil
 
 
 # Test configuration class

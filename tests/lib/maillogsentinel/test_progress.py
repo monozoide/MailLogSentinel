@@ -1,11 +1,10 @@
 # tests/lib/maillogsentinel/test_progress.py
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 import io
 import sys
 from lib.maillogsentinel.progress import (
     ProgressTracker,  # Import the class
-    get_terminal_width,
     GREEN,
     RED,
     ORANGE,
