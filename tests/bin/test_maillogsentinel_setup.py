@@ -6,7 +6,6 @@ import subprocess  # Added for CalledProcessError
 import tempfile
 import os
 import io  # For mock_log_fh spec
-import locale  # For mocking in specific test
 import re
 
 
@@ -413,7 +412,6 @@ class TestNonInteractiveSetupConfig(unittest.TestCase):
 
             try:
                 original_backed_up_items = mls_setup.backed_up_items
-                original_created_final_paths = mls_setup.created_final_paths
                 mls_setup.backed_up_items = []
                 mls_setup.created_final_paths = []
 
@@ -433,7 +431,6 @@ class TestNonInteractiveSetupConfig(unittest.TestCase):
             finally:
                 os.remove(config_path_str)
                 mls_setup.backed_up_items = original_backed_up_items
-                mls_setup.created_final_paths = original_created_final_paths
 
     def test_path_management_backup_existing(self):
         """Test backup of workdir and statedir when they already exist."""
@@ -475,7 +472,6 @@ class TestNonInteractiveSetupConfig(unittest.TestCase):
 
             try:
                 original_backed_up_items = mls_setup.backed_up_items
-                original_created_final_paths = mls_setup.created_final_paths
                 mls_setup.backed_up_items = []
                 mls_setup.created_final_paths = []
 
@@ -502,7 +498,6 @@ class TestNonInteractiveSetupConfig(unittest.TestCase):
             finally:
                 os.remove(config_path_str)
                 mls_setup.backed_up_items = original_backed_up_items
-                mls_setup.created_final_paths = original_created_final_paths
 
     # User/Group Management Tests
     def test_user_verification_non_existent(self):
@@ -946,7 +941,6 @@ class TestNonInteractiveSetupConfig(unittest.TestCase):
             config.read_string(VALID_CONFIG_CONTENT)
 
             try:
-                original_created_final_paths = mls_setup.created_final_paths
                 mls_setup.created_final_paths = []
                 with patch(
                     "configparser.ConfigParser.read", return_value=[config_path_str_val]
@@ -1374,7 +1368,7 @@ class TestNonInteractiveSetupConfig(unittest.TestCase):
             "bin.maillogsentinel_setup.subprocess.run"
         ) as mock_subprocess_run, patch(
             "bin.maillogsentinel_setup._setup_print_and_log"
-        ) as mock_setup_print, patch(
+        ), patch(
             "bin.maillogsentinel_setup.sys.exit"
         ) as mock_sys_exit:  # noqa: F841
 
@@ -1405,7 +1399,7 @@ class TestNonInteractiveSetupConfig(unittest.TestCase):
             # Expected calls to systemd-analyze for calendar validation
             # These come from the VALID_CONFIG_CONTENT and the defaults in non_interactive_setup
             # Order matters here as they are called before systemctl daemon-reload.
-            expected_calendar_validation_calls = [
+            [
                 unittest.mock.call(
                     [
                         "/usr/bin/systemd-analyze",

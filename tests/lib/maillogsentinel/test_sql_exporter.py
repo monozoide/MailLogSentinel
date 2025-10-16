@@ -16,7 +16,6 @@ from lib.maillogsentinel.sql_exporter import (
     format_sql_value,
     generate_insert_statement,
     run_sql_export,
-    SQLExportError,
     CSVSchemaError,
 )
 from lib.maillogsentinel.config import AppConfig  # For mocking config
@@ -65,10 +64,13 @@ class MockFixedDatetime(datetime.datetime):
         return cls._now_val
 
 
+from unittest.mock import patch, MagicMock
+
 @pytest.fixture
-def mock_logger(mocker):
+def mock_logger():
     """Fixture to mock the logger."""
-    return mocker.patch("lib.maillogsentinel.sql_exporter.logger")
+    with patch("lib.maillogsentinel.sql_exporter.logger") as mock_log:
+        yield mock_log
 
 
 @pytest.fixture
@@ -285,7 +287,6 @@ def test_generate_insert_statement(sample_column_mapping_content):
     # Adjust mapping for this test: "id" is auto-increment, so it shouldn't be in INSERT
     # "status" is ENUM
 
-    expected_sql = "INSERT INTO logs (server, event_time, ip, username, hostname, status) VALUES ('mail.example.com', '2023-01-01 12:00:00', '192.168.1.1', 'testuser', 'client.local', 'OK');"
     # Note: The order of columns in the output SQL depends on the iteration order of sample_column_mapping_content.
     # For robust testing, parse the generated SQL or compare sets of (column, value) pairs.
     # For simplicity here, we rely on dict iteration order (Python 3.7+).
@@ -302,7 +303,6 @@ def test_generate_insert_statement(sample_column_mapping_content):
     # The columns will be: server, event_time, ip, username, hostname, status
 
     # Reconstruct the expected string based on the order in sample_column_mapping_content, skipping 'id'
-    cols_ordered = [k for k in sample_column_mapping_content if k != "id"]
 
     # This test is a bit fragile due to string matching.
     # A more robust test would parse the SQL.
@@ -408,91 +408,87 @@ def test_run_sql_export_empty_csv(
 
 
 def test_run_sql_export_basic_flow(
-    mock_app_config, sample_column_mapping_content, mock_logger, mocker
+    mock_app_config, sample_column_mapping_content, mock_logger
 ):
-    csv_file = mock_app_config.working_dir / mock_app_config.csv_filename
-    offset_file = mock_app_config.state_dir / "sql_state.offset"
-    sql_output_dir = mock_app_config.working_dir / "sql"
+    with patch("lib.maillogsentinel.sql_exporter.datetime.datetime", MockFixedDatetime):
+        csv_file = mock_app_config.working_dir / mock_app_config.csv_filename
+        offset_file = mock_app_config.state_dir / "sql_state.offset"
+        sql_output_dir = mock_app_config.working_dir / "sql"
 
-    if offset_file.exists():
-        offset_file.unlink()
+        if offset_file.exists():
+            offset_file.unlink()
 
-    # Prepare CSV data
-    # Get header from mapping, skipping placeholder for auto-increment ID
-    csv_headers = [
-        info["csv_column_name"]
-        for _, info in sample_column_mapping_content.items()
-        if info["csv_column_name"] != "csv_id_placeholder"
-    ]
+        # Prepare CSV data
+        # Get header from mapping, skipping placeholder for auto-increment ID
+        csv_headers = [
+            info["csv_column_name"]
+            for _, info in sample_column_mapping_content.items()
+            if info["csv_column_name"] != "csv_id_placeholder"
+        ]
 
-    csv_content = ";".join(csv_headers) + "\n"
-    csv_content += "srv1;2023-01-01 10:00:00;1.1.1.1;user1;host1.com;OK\n"
-    csv_content += "srv2;2023-01-02 11:00:00;2.2.2.2;user2;host2.net;FAIL\n"
-    csv_file.write_text(csv_content)
+        csv_content = ";".join(csv_headers) + "\n"
+        csv_content += "srv1;2023-01-01 10:00:00;1.1.1.1;user1;host1.com;OK\n"
+        csv_content += "srv2;2023-01-02 11:00:00;2.2.2.2;user2;host2.net;FAIL\n"
+        csv_file.write_text(csv_content)
 
-    # Mock datetime.datetime class in the sql_exporter module
-    mocker.patch(
-        "lib.maillogsentinel.sql_exporter.datetime.datetime", MockFixedDatetime
-    )
+        # Set specific times for each run
+        # First run
+        MockFixedDatetime.set_now(datetime.datetime(2023, 1, 1, 10, 0, 0))
+        assert run_sql_export(mock_app_config)
+        exported_files1 = list(sql_output_dir.glob("*.sql"))
+        assert len(exported_files1) == 1
+        expected_filename1 = sql_output_dir / "20230101_1000_maillogsentinel_export.sql"
+        assert expected_filename1 in exported_files1
+        sql_content1 = expected_filename1.read_text()
+        assert (
+            "INSERT INTO test_log_events (server, event_time, ip, username, hostname, status) VALUES ('srv1', '2023-01-01 10:00:00', '1.1.1.1', 'user1', 'host1.com', 'OK');"
+            in sql_content1
+        )
+        assert (
+            "INSERT INTO test_log_events (server, event_time, ip, username, hostname, status) VALUES ('srv2', '2023-01-02 11:00:00', '2.2.2.2', 'user2', 'host2.net', 'FAIL');"
+            in sql_content1
+        )
+        assert "BEGIN TRANSACTION;" in sql_content1
+        assert "COMMIT;" in sql_content1
 
-    # Set specific times for each run
-    # First run
-    MockFixedDatetime.set_now(datetime.datetime(2023, 1, 1, 10, 0, 0))
-    assert run_sql_export(mock_app_config)
-    exported_files1 = list(sql_output_dir.glob("*.sql"))
-    assert len(exported_files1) == 1
-    expected_filename1 = sql_output_dir / "20230101_1000_maillogsentinel_export.sql"
-    assert expected_filename1 in exported_files1
-    sql_content1 = expected_filename1.read_text()
-    assert (
-        "INSERT INTO test_log_events (server, event_time, ip, username, hostname, status) VALUES ('srv1', '2023-01-01 10:00:00', '1.1.1.1', 'user1', 'host1.com', 'OK');"
-        in sql_content1
-    )
-    assert (
-        "INSERT INTO test_log_events (server, event_time, ip, username, hostname, status) VALUES ('srv2', '2023-01-02 11:00:00', '2.2.2.2', 'user2', 'host2.net', 'FAIL');"
-        in sql_content1
-    )
-    assert "BEGIN TRANSACTION;" in sql_content1
-    assert "COMMIT;" in sql_content1
+        original_offset = len(csv_content.encode("utf-8"))
+        assert int(offset_file.read_text()) == original_offset
 
-    original_offset = len(csv_content.encode("utf-8"))
-    assert int(offset_file.read_text()) == original_offset
+        # Second run (no new data)
+        MockFixedDatetime.set_now(datetime.datetime(2023, 1, 1, 10, 1, 0))  # Different time
+        assert run_sql_export(mock_app_config)
+        current_sql_files = list(sql_output_dir.glob("*.sql"))
+        assert len(current_sql_files) == 1
+        assert expected_filename1 in current_sql_files
 
-    # Second run (no new data)
-    MockFixedDatetime.set_now(datetime.datetime(2023, 1, 1, 10, 1, 0))  # Different time
-    assert run_sql_export(mock_app_config)
-    current_sql_files = list(sql_output_dir.glob("*.sql"))
-    assert len(current_sql_files) == 1
-    assert expected_filename1 in current_sql_files
+        # Add new data
+        new_line = "srv3;2023-01-03 12:00:00;3.3.3.3;user3;host3.org;OK\n"
+        with open(csv_file, "a") as f:
+            f.write(new_line)
 
-    # Add new data
-    new_line = "srv3;2023-01-03 12:00:00;3.3.3.3;user3;host3.org;OK\n"
-    with open(csv_file, "a") as f:
-        f.write(new_line)
+        # Third run
+        MockFixedDatetime.set_now(
+            datetime.datetime(2023, 1, 1, 10, 2, 0)
+        )  # Different time again
+        assert run_sql_export(mock_app_config)
+        exported_files3 = list(sql_output_dir.glob("*.sql"))
+        assert len(exported_files3) == 2
+        expected_filename3 = sql_output_dir / "20230101_1002_maillogsentinel_export.sql"
+        assert expected_filename3 in exported_files3
+        sql_content3 = expected_filename3.read_text()
+        assert (
+            "INSERT INTO test_log_events (server, event_time, ip, username, hostname, status) VALUES ('srv3', '2023-01-03 12:00:00', '3.3.3.3', 'user3', 'host3.org', 'OK');"
+            in sql_content3
+        )
+        assert "BEGIN TRANSACTION;" in sql_content3
+        assert "COMMIT;" in sql_content3
 
-    # Third run
-    MockFixedDatetime.set_now(
-        datetime.datetime(2023, 1, 1, 10, 2, 0)
-    )  # Different time again
-    assert run_sql_export(mock_app_config)
-    exported_files3 = list(sql_output_dir.glob("*.sql"))
-    assert len(exported_files3) == 2
-    expected_filename3 = sql_output_dir / "20230101_1002_maillogsentinel_export.sql"
-    assert expected_filename3 in exported_files3
-    sql_content3 = expected_filename3.read_text()
-    assert (
-        "INSERT INTO test_log_events (server, event_time, ip, username, hostname, status) VALUES ('srv3', '2023-01-03 12:00:00', '3.3.3.3', 'user3', 'host3.org', 'OK');"
-        in sql_content3
-    )
-    assert "BEGIN TRANSACTION;" in sql_content3
-    assert "COMMIT;" in sql_content3
-
-    assert int(offset_file.read_text()) == original_offset + len(
-        new_line.encode("utf-8")
-    )
-    mock_logger.info.assert_any_call(
-        "sql_export: SQL export process finished. Processed: 1 lines. Exported: 1 records."
-    )
+        assert int(offset_file.read_text()) == original_offset + len(
+            new_line.encode("utf-8")
+        )
+        mock_logger.info.assert_any_call(
+            "sql_export: SQL export process finished. Processed: 1 lines. Exported: 1 records."
+        )
 
 
 # (More tests for run_sql_export: mapping file issues, header validation on resume, etc.)
