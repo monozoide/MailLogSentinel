@@ -6,6 +6,7 @@ import pytest
 import json
 from pathlib import Path
 import datetime
+from unittest.mock import patch, MagicMock
 
 from lib.maillogsentinel.sql_exporter import (
     load_column_mapping,
@@ -63,8 +64,6 @@ class MockFixedDatetime(datetime.datetime):
             raise ValueError("MockFixedDatetime: now() called but _now_val not set.")
         return cls._now_val
 
-
-from unittest.mock import patch, MagicMock
 
 @pytest.fixture
 def mock_logger():
