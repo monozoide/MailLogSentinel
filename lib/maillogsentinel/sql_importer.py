@@ -331,12 +331,15 @@ def run_sql_import(config: AppConfig, output_log_level: str = "INFO") -> bool:
             f"{LOG_PREFIX}: No user-specific column mapping file configured, attempting to load bundled default."
         )
         try:
-            with importlib.resources.files("lib.maillogsentinel.data").joinpath(
-                "maillogsentinel_sql_column_mapping.json"
-            ) as bundled_path_traversable:
-                final_mapping_file_path = Path(
-                    bundled_path_traversable
-                )  # Convert Traversable to Path
+            bundled_path_traversable = importlib.resources.files(
+                "lib.maillogsentinel.data"
+            ).joinpath("maillogsentinel_sql_column_mapping.json")
+            with importlib.resources.as_file(
+                bundled_path_traversable
+            ) as resolved_bundled_path:
+                final_mapping_file_path = (
+                    resolved_bundled_path  # This is now a concrete Path
+                )
                 if not final_mapping_file_path.is_file():
                     logger.critical(
                         f"{LOG_PREFIX}: Bundled column mapping file not found at expected location via importlib.resources: {final_mapping_file_path}. This indicates a packaging issue. Aborting SQL import."
