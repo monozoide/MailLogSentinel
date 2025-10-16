@@ -10,10 +10,9 @@ with retries and rollbacks.
 import logging
 import sqlite3
 import time
-import datetime  # For handling imported file records
 import os  # For os.getpid() in FileLock
 from pathlib import Path
-from typing import List, Tuple, Dict, Any, Optional
+from typing import Optional
 import fcntl  # For file locking on POSIX systems
 
 import importlib.resources  # Added for loading bundled data
@@ -714,6 +713,3 @@ if __name__ == "__main__":
     print("\nsql_importer.py direct test finished.")
     # Note: For a real test, you'd use pytest and mock AppConfig, Path.is_file(), open(), etc.
     # This direct run is just for very basic flow checking.
-
-# Required for FileLock to get PID (if not already imported by another module like logging)
-import os

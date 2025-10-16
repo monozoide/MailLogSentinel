@@ -1,0 +1,64 @@
+<!-- Type: Feature -->
+
+# 🎯 Description
+_What user need? What specific problem?_
+
+# ✅ Proposed solution
+_Summarize the solution. Describe the scope and what is explicitly out of scope._
+
+# 🖼️ UI/UX (if applicable)
+_Add BEFORE/AFTER screenshots, GIFs, videos._
+
+# 🧨 Breaking changes
+_Yes/No. If Yes, detail the impact and the steps for users._
+_Check all that apply_
+
+- [ ] New feature (non-breaking change adding functionality)
+- [ ] Breaking change (feature causing existing functionality to change)
+- [ ] Refactoring (functional changes)
+- [ ] Other (please describe):
+
+# ⚙️ Implementation details
+- Impacted modules:
+- API contracts changed?:
+- DB schema / migrations?:
+- etc
+
+# 🛡️ Security & 🔥 Performance
+_Points of attention: sensitive data, perf, cache, etc._
+
+# 🧪 Tests
+- [ ] Unit tests
+- [ ] Integration tests
+- [ ] Performance tests (if applicable)
+
+**Test coverage:** _X%_ (before) → _Y%_ (after)
+
+**Manual validation procedure:**
+1. …
+2. …
+3. Expected result: …
+
+# 📚 Documentation
+- [ ] README / Docs updated
+- [ ] Changelog / Release notes (if necessary)
+
+# 🔗 Dependencies
+_External services, migrations to apply before/after._
+
+# 🔗 Links
+Closes #        _main issue_
+Related:        _Related PR/Issues_
+
+---
+
+# ✅ Project checklist
+- [ ] All my commits are **signed (GPG/SSH)** in accordance with the [contribution guide](../blob/main/docs/CONTRIBUTING.md)
+- [ ] `lint` passes locally and in CI
+- [ ] No sensitive data exposed (credentials, tokens)
+- [ ] Manual validation completed
+- [ ] The added/covered tests are relevant for the feature
+- [ ] User/developer documentation is up to date (where applicable)
+- [ ] Security/performance impacts have been reviewed
+- [ ] I have described a clear manual validation procedure
+

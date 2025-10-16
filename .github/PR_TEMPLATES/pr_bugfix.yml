@@ -1,0 +1,73 @@
+<!-- Type: Bugfix -->
+
+# 🐞 Bug Summary
+_Short description of the bug + user severity/impact._
+
+Severity: (critical / high / medium / low)
+
+# 🔁 Reproduction
+_Minimal steps to reproduce_
+
+1. …
+2. …
+3. …
+
+**Actual result:**
+_What actually happens_
+
+**Expected result:**
+_What should happen_
+
+# 🌍 Runtime Context
+- Affected version(s):
+- Environment(s): (local / staging / prod)
+- OS:
+- Python:
+- Logs/trace ID (if applicable):
+
+# 🕵️ Analysis & Root Cause
+_What is the root cause? How did you confirm it? Links to traces._
+
+- Confirmed root cause:
+
+# ✅ Applied Fix
+_Describe the fix precisely and why it addresses the root cause. Rejected alternatives._
+
+- Affected modules:
+- Risks/side effects:
+
+# 🧪 Tests (including regression)
+- [ ] Unit test covering the case
+- [ ] Integration/E2E test
+- [ ] Non-regression test (bug does not reappear)
+
+**Manual validation procedure:**
+1. …
+2. …
+3. Expected result: …
+
+# 🚀 Deployment & Rollback
+- Deployment steps:
+- Rollback plan:
+- Backport needed? (versions/LTS):
+
+# 🔗 Links
+Closes #        _main issue_
+Related:        _Related PR/Issues_
+
+# 🖼️ Evidence
+_Screenshots, videos, relevant logs (no secrets), minimal requests_
+- Screenshots:
+- Log excerpts:
+
+---
+
+# ✅ Project checklist
+- [ ] All my commits are **signed (GPG/SSH)** in accordance with the [contribution guide](../blob/main/docs/CONTRIBUTING.md)
+- [ ] `lint` passes locally and in CI
+- [ ] No sensitive data exposed (credentials, tokens)
+- [ ] Manual validation completed
+- [ ] The added/covered tests are relevant for the feature
+- [ ] User/developer documentation is up to date (where applicable)
+- [ ] Security/performance impacts have been reviewed
+- [ ] I have described a clear manual validation procedure

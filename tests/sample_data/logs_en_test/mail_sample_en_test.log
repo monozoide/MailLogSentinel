@@ -1,0 +1,3 @@
+Feb  2 02:00:00 hostB postfix/smtpd[200]: client=unknown[4.4.4.4], sasl_method=PLAIN, sasl_username=user_en1@example.com
+Feb  2 02:00:01 hostB postfix/smtpd[201]: client=unknown[5.5.5.5], sasl_method=LOGIN, sasl_username=user_en2@example.com
+Feb  2 02:00:02 hostB postfix/smtpd[202]: client=unknown[6.6.6.6], sasl_method=PLAIN, sasl_username=user_en3@example.com

@@ -6,7 +6,6 @@ from datetime import datetime
 # Import the function to be tested
 from lib.maillogsentinel.log_utils import (
     _parse_log_line,
-    MONTHS,
 )  # MONTHS needed for test_parse_log_line_invalid_month by implication
 
 # --- Mocks and Fixtures ---

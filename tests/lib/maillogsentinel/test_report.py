@@ -299,7 +299,7 @@ def test_send_report_success(
     assert len(attachments) == 1
     assert attachments[0].get_filename() == mock_app_config.csv_filename
     mock_logger.info.assert_any_call(
-        f"Report sent from testuser@my.server.com to recipient@example.com"
+        "Report sent from testuser@my.server.com to recipient@example.com"
     )
 
 
@@ -376,7 +376,7 @@ def test_send_report_sender_override(
     sent_msg: EmailMessage = mock_smtp_instance.send_message.call_args[0][0]
     assert sent_msg["From"] == "override@sender.com"
     mock_logger.info.assert_any_call(
-        f"Report sent from override@sender.com to recipient@example.com"
+        "Report sent from override@sender.com to recipient@example.com"
     )
 
 
