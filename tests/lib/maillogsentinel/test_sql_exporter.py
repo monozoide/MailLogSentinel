@@ -6,7 +6,7 @@ import pytest
 import json
 from pathlib import Path
 import datetime
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 from lib.maillogsentinel.sql_exporter import (
     load_column_mapping,
