@@ -18,6 +18,7 @@ from lib.maillogsentinel.sql_exporter import (
     generate_insert_statement,
     run_sql_export,
     CSVSchemaError,
+    SQLExportError,
 )
 from lib.maillogsentinel.config import AppConfig  # For mocking config
 
@@ -189,9 +190,9 @@ def test_format_sql_value():
     # Test for potentially problematic None conversion for NOT NULL without default
     # Current logic might return "NULL" which could be an issue, or "''" for text.
     # This depends on strictness desired.
-    assert (
-        format_sql_value(None, "INT NOT NULL") == "NULL"
-    )  # This would likely fail on DB if column is NOT NULL
+    with pytest.raises(SQLExportError) as excinfo:
+        format_sql_value(None, "INT NOT NULL")
+    assert "Null or empty value provided for a NOT NULL column" in str(excinfo.value)
 
 
 def test_load_column_mapping_success(
@@ -309,10 +310,7 @@ def test_generate_insert_statement(sample_column_mapping_content):
         row_dict, table_name, sample_column_mapping_content
     )
     assert stmt is not None
-    assert (
-        "INSERT INTO logs (server, event_time, ip, username, hostname, status) VALUES ('mail.example.com', '2023-01-01 12:00:00', '192.168.1.1', 'testuser', 'client.local', 'OK');"
-        in stmt
-    )
+    assert ('INSERT INTO logs ("server", "event_time", "ip", "username", "hostname", "status") VALUES (\'mail.example.com\', \'2023-01-01 12:00:00\', \'192.168.1.1\', \'testuser\', \'client.local\', \'OK\');' in stmt)
 
 
 def test_generate_insert_statement_with_none_for_nullable(
@@ -333,10 +331,7 @@ def test_generate_insert_statement_with_none_for_nullable(
     assert stmt is not None
     assert "hostname" in stmt
     assert "NULL" in stmt  # Check that hostname is NULL
-    assert (
-        "'mail.example.com', '2023-01-01 12:00:00', '192.168.1.1', 'testuser', NULL, 'FAIL'"
-        in stmt
-    )
+    assert ("'mail.example.com', '2023-01-01 12:00:00', '192.168.1.1', 'testuser', NULL, 'FAIL'" in stmt)
 
 
 def test_generate_insert_statement_skip_auto_increment_id(
@@ -439,14 +434,8 @@ def test_run_sql_export_basic_flow(
         expected_filename1 = sql_output_dir / "20230101_1000_maillogsentinel_export.sql"
         assert expected_filename1 in exported_files1
         sql_content1 = expected_filename1.read_text()
-        assert (
-            "INSERT INTO test_log_events (server, event_time, ip, username, hostname, status) VALUES ('srv1', '2023-01-01 10:00:00', '1.1.1.1', 'user1', 'host1.com', 'OK');"
-            in sql_content1
-        )
-        assert (
-            "INSERT INTO test_log_events (server, event_time, ip, username, hostname, status) VALUES ('srv2', '2023-01-02 11:00:00', '2.2.2.2', 'user2', 'host2.net', 'FAIL');"
-            in sql_content1
-        )
+        assert ('INSERT INTO test_log_events ("server", "event_time", "ip", "username", "hostname", "status") VALUES (\'srv1\', \'2023-01-01 10:00:00\', \'1.1.1.1\', \'user1\', \'host1.com\', \'OK\');' in sql_content1)
+        assert ('INSERT INTO test_log_events ("server", "event_time", "ip", "username", "hostname", "status") VALUES (\'srv2\', \'2023-01-02 11:00:00\', \'2.2.2.2\', \'user2\', \'host2.net\', \'FAIL\');' in sql_content1)
         assert "BEGIN TRANSACTION;" in sql_content1
         assert "COMMIT;" in sql_content1
 
@@ -475,10 +464,7 @@ def test_run_sql_export_basic_flow(
         expected_filename3 = sql_output_dir / "20230101_1002_maillogsentinel_export.sql"
         assert expected_filename3 in exported_files3
         sql_content3 = expected_filename3.read_text()
-        assert (
-            "INSERT INTO test_log_events (server, event_time, ip, username, hostname, status) VALUES ('srv3', '2023-01-03 12:00:00', '3.3.3.3', 'user3', 'host3.org', 'OK');"
-            in sql_content3
-        )
+        assert ('INSERT INTO test_log_events ("server", "event_time", "ip", "username", "hostname", "status") VALUES (\'srv3\', \'2023-01-03 12:00:00\', \'3.3.3.3\', \'user3\', \'host3.org\', \'OK\');' in sql_content3)
         assert "BEGIN TRANSACTION;" in sql_content3
         assert "COMMIT;" in sql_content3
 
