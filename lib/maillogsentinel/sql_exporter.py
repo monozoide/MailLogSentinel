@@ -212,8 +212,9 @@ def format_sql_value(value: Any, sql_type_def: str) -> str:
     Returns:
         SQL-formatted string representation of the value.
     """
-    is_not_null = "NOT NULL" in sql_type_def.upper()
-    is_nullable = not is_not_null or "DEFAULT NULL" in sql_type_def.upper()
+    # A column is considered nullable if "NOT NULL" is absent from its definition.
+    # The presence of "DEFAULT NULL" implies nullability, but the absence of "NOT NULL" is the key check.
+    is_nullable = "NOT NULL" not in sql_type_def.upper()
 
     if value is None or str(value).strip().lower() in ["null", "na", "n/a", ""]:
         if is_nullable:
@@ -228,6 +229,9 @@ def format_sql_value(value: Any, sql_type_def: str) -> str:
 
     if "int" in sql_type_lower or "serial" in sql_type_lower:
         try:
+            # Ensure that empty strings or other non-numeric values are not converted to NULL for NOT NULL columns
+            if str(value).strip() == "":
+                 raise ValueError("Empty string cannot be converted to integer.")
             return str(int(value))
         except (ValueError, TypeError):
             if is_nullable:
@@ -890,6 +894,29 @@ if __name__ == "__main__":
         else:
             test_runner_logger.error(
                 "Test Case 4 Result (User Override Invalid JSON): FAIL (should have aborted)"
+            )
+            all_tests_passed = False
+
+        # --- Test Case 5: Data conversion failure for NOT NULL integer ---
+        test_runner_logger.info(
+            "\n--- Test Case 5: Data conversion failure for NOT NULL integer ---"
+        )
+        config_case5 = DummyTestConfig(base_dir_name="maillog_test_case5_")
+        test_configs_to_clean.append(config_case5)
+        # Create a CSV with an empty string for 'asn', which maps to 'asn_int' (NOT NULL)
+        invalid_row_vals = DUMMY_CSV_DATA_ROW_1_VALS.copy()
+        invalid_row_vals["asn"] = ""  # This should fail conversion for a NOT NULL int
+        invalid_row_data = [_make_dummy_csv_data_row(DUMMY_CSV_HEADERS, invalid_row_vals)]
+        _create_dummy_csv(config_case5, DUMMY_CSV_HEADERS, invalid_row_data)
+        _reset_offset_file(config_case5)
+        success_case5 = run_sql_export(config_case5)
+        if not success_case5:
+            test_runner_logger.info(
+                "Test Case 5 Result (Bad Data for NOT NULL Int): SUCCESS (aborted as expected)"
+            )
+        else:
+            test_runner_logger.error(
+                "Test Case 5 Result (Bad Data for NOT NULL Int): FAIL (should have aborted)"
             )
             all_tests_passed = False
 
