@@ -11,7 +11,7 @@ import datetime
 import json
 import logging
 from pathlib import Path
-from typing import Optional, List, Dict, Any
+from typing import List, Dict, Any
 import importlib.resources  # Added for loading bundled data
 
 import tempfile
