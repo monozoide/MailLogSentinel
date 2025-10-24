@@ -162,11 +162,9 @@ def main():
             sys.exit(1)
 
         setup_source_config_path_str: str
-        setup_mode_flag_str: str
 
         if config_file_explicitly_passed:
             setup_source_config_path_str = str(config_file_path_for_ops)
-            setup_mode_flag_str = "--automated"
             progress_tracker.print_message(  # Updated call
                 f"Attempting automated setup using configuration file: {setup_source_config_path_str}",
                 level="info",
@@ -174,7 +172,6 @@ def main():
         else:
             # For interactive setup, DEFAULT_CONFIG_PATH is the *target* configuration file.
             setup_source_config_path_str = str(DEFAULT_CONFIG_PATH)
-            setup_mode_flag_str = "--interactive"
             progress_tracker.print_message(
                 "Starting interactive setup process...", level="info"
             )  # Updated call
@@ -187,9 +184,13 @@ def main():
         process_args = [
             sys.executable,
             str(setup_script_path),
+            "--config",
             setup_source_config_path_str,
-            setup_mode_flag_str,
         ]
+        if config_file_explicitly_passed:
+            process_args.append("--non-interactive")
+        else:
+            process_args.append("--interactive")
         process = subprocess.Popen(
             process_args
         )  # stdout/stderr go to parent's by default
